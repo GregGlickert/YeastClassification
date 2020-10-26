@@ -51,7 +51,7 @@ for imagePath in paths.list_images(args["images"]):
     color_counter = 0
 """
 for i in range(0,1):
-    img = Image.open("IMG_0214.JPG")
+    img = Image.open("/Users/gregglickert/Documents/GitHub/YeastClassification/Test_images/IMG_0221.JPG")
     color_counter = 0
 
     left = 1875  # was 2050
@@ -59,33 +59,34 @@ for i in range(0,1):
     right = 5680
     bottom = 3260  # was 3280
 
+    path = '/Users/gregglickert/Documents/GitHub/YeastClassification/Classifyer_dump'
     img_crop = img.crop((left, top, right, bottom))
     # img_crop.show()
-    img_crop.save('Cropped_full_yeast.png')
-    circle_me = cv2.imread("Cropped_full_yeast.png")
-    cropped_img = cv2.imread("Cropped_full_yeast.png")  # changed from Yeast_Cluster.%d.png  %counter
+    img_crop.save(os.path.join(path,'Cropped_full_yeast.png'))
+    circle_me = cv2.imread(os.path.join(path,"Cropped_full_yeast.png"))
+    cropped_img = cv2.imread(os.path.join(path,"Cropped_full_yeast.png"))  # changed from Yeast_Cluster.%d.png  %counter
     blue_image = pcv.rgb2gray_lab(cropped_img, 'b')  # can do l a or b
     Gaussian_blue = cv2.adaptiveThreshold(blue_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 241,
                                           -1)  # set to 499 111 241
-    cv2.imwrite("blue_test.png", Gaussian_blue)
+    cv2.imwrite(os.path.join(path,"blue_test.png"), Gaussian_blue)
     blur_image = pcv.median_blur(Gaussian_blue, 10)
     heavy_fill_blue = pcv.fill(blur_image, 400)  # value 400
-    cv2.imwrite("Cropped_Threshold.png", heavy_fill_blue)
+    cv2.imwrite(os.path.join(path, "Cropped_Threshold.png"), heavy_fill_blue)
 
     # image cropping crap
     counter = 0
     counter1 = 0  # normally 0
-    im = Image.open("Cropped_full_yeast.png")  # was "Cropped_full_yeast.png"
+    im = Image.open(os.path.join(path,"Cropped_full_yeast.png"))  # was "Cropped_full_yeast.png"
     sizeX, sizeY = im.size
     im_sizeX = round(sizeX / 12)
     im_sizeY = round(sizeY / 8)
     for h in range(0, im.height, im_sizeY):
         nim = im.crop((0, h, im.width - 1, min(im.height, h + im_sizeY) - 1))
-        nim.save("Yeast_Row." + str(counter) + ".png")
+        nim.save(os.path.join(path,"Yeast_Row." + str(counter) + ".png"))
         counter += 1
     anotherCounter = 0
     for i in range(0, 8):
-        columnImage = ("Yeast_Row.%d.png" % anotherCounter)
+        columnImage = (os.path.join(path,"Yeast_Row.%d.png" % anotherCounter))
         Each_Image = Image.open(columnImage)
         sizeX2, sizeY2 = Each_Image.size
         Each_Image_sizeX = round(sizeX2 / 12)
@@ -95,7 +96,7 @@ for i in range(0,1):
         widthCounter2 = Each_Image_sizeX
         for w in range(0, 12):
             Wim = Each_Image.crop((widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX) - 1))
-            Wim.save("Yeast_Cluster." + str(counter1) + ".png")
+            Wim.save(os.path.join(path,"Yeast_Cluster." + str(counter1) + ".png"))
             counter1 += 1
             widthCounter1 = widthCounter1 + Each_Image_sizeX
             widthCounter2 = widthCounter2 + Each_Image_sizeX
@@ -106,18 +107,18 @@ for i in range(0,1):
 
     for i in range(0, 96):
         print("TIMES THRU big loop %d" % i)
-        im = Image.open("Yeast_Cluster.%d.png" % i)
+        im = Image.open(os.path.join(path,"Yeast_Cluster.%d.png" % i))
         sizeX, sizeY = im.size
         im_sizeX = round(sizeX / 2)
         im_sizeY = round(sizeY / 2)
         for h in range(0, im.height, im_sizeY):
             nim = im.crop((0, h, im.width - 1, min(im.height, h + im_sizeY) - 1))
-            nim.save("ROW_SMALL." + str(row_counter_for_save) + ".png")
+            nim.save(os.path.join(path,"ROW_SMALL." + str(row_counter_for_save) + ".png"))
             row_counter_for_save += 1
             if (h >= im_sizeY):
                 break
         for i in range(0, 2):
-            rowImage = ("ROW_SMALL.%d.png" % row_counter_for_open)
+            rowImage = (os.path.join(path,"ROW_SMALL.%d.png" % row_counter_for_open))
             Each_Image = Image.open(rowImage)
             sizeX2, sizeY2 = Each_Image.size
             Each_Image_sizeX = round(sizeX2 / 2)
@@ -128,24 +129,24 @@ for i in range(0,1):
             for w in range(0, 2):
                 Wim = Each_Image.crop(
                     (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX) - 1))
-                Wim.save("SMALL_CELL." + str(counter1) + ".png")
+                Wim.save(os.path.join(path,"SMALL_CELL." + str(counter1) + ".png"))
                 counter1 += 1
                 widthCounter1 = widthCounter1 + Each_Image_sizeX
                 widthCounter2 = widthCounter2 + Each_Image_sizeX
 
     counter = 0
     counter1 = 0  # normally 0
-    im = Image.open("Cropped_Threshold.png")  # was "Cropped_full_yeast.png"
+    im = Image.open(os.path.join(path,"Cropped_Threshold.png"))  # was "Cropped_full_yeast.png"
     sizeX, sizeY = im.size
     im_sizeX = round(sizeX / 12)
     im_sizeY = round(sizeY / 8)
     for h in range(0, im.height, im_sizeY):
         nim = im.crop((0, h, im.width - 1, min(im.height, h + im_sizeY) - 1))
-        nim.save("Yeast_Row_Threshold." + str(counter) + ".png")
+        nim.save(os.path.join(path,"Yeast_Row_Threshold." + str(counter) + ".png"))
         counter += 1
     anotherCounter = 0
     for i in range(0, 8):
-        columnImage = ("Yeast_Row_Threshold.%d.png" % anotherCounter)
+        columnImage = (os.path.join(path,"Yeast_Row_Threshold.%d.png" % anotherCounter))
         Each_Image = Image.open(columnImage)
         sizeX2, sizeY2 = Each_Image.size
         Each_Image_sizeX = round(sizeX2 / 12)
@@ -155,7 +156,7 @@ for i in range(0,1):
         widthCounter2 = Each_Image_sizeX
         for w in range(0, 12):
             Wim = Each_Image.crop((widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX) - 1))
-            Wim.save("Yeast_Cluster_Threshold." + str(counter1) + ".png")
+            Wim.save(os.path.join(path,"Yeast_Cluster_Threshold." + str(counter1) + ".png"))
             counter1 += 1
             widthCounter1 = widthCounter1 + Each_Image_sizeX
             widthCounter2 = widthCounter2 + Each_Image_sizeX
@@ -165,14 +166,14 @@ for i in range(0,1):
     toomanycounter = 1
     anothercounter = 1
     for i in range(0,96): # was 96
-        cropped_img = cv2.imread('Yeast_Cluster_Threshold.%d.png' %counter, cv2.IMREAD_UNCHANGED) #changed from Yeast_Cluster.%d.png  %counter
+        cropped_img = cv2.imread(os.path.join(path,'Yeast_Cluster_Threshold.%d.png' %counter), cv2.IMREAD_UNCHANGED) #changed from Yeast_Cluster.%d.png  %counter
         #blue_image = pcv.rgb2gray_lab(cropped_img, 'b') # can do l a or b
         #Gaussian_blue = cv2.adaptiveThreshold(blue_image,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,241,-1)#set to 499 111 241
         #cv2.imwrite("blue_test.png", Gaussian_blue)
         #blur_image = pcv.median_blur(Gaussian_blue,10)
         #heavy_fill_blue = pcv.fill(blur_image, 400)#value 400
         #cv2.imwrite("Threshold_img_crop.png",heavy_fill_blue)
-        circle_me = cv2.imread("Yeast_Cluster.%d.png" %counter)
+        circle_me = cv2.imread(os.path.join(path,"Yeast_Cluster.%d.png" %counter))
         """
         id_objects, obj_hierarchy = pcv.find_objects(img=cropped_img, mask=heavy_fill_blue)
         roi_contour, roi_hierarchy = pcv.roi.rectangle(cropped_img,x=0, y=0,h=2530,w=3820)
@@ -334,7 +335,7 @@ for i in range(0,1):
                 cell_id_array.append(XL_centroids)
 
 
-        cv2.imwrite("centroid test.png", circle_me)
+        cv2.imwrite(os.path.join(path,"centroid test.png"), circle_me)
 
         area_array = area_array_small + area_array_med + area_array_large + area_array_XL
 
@@ -409,12 +410,12 @@ for i in range(0,1):
         # https://www.pyimagesearch.com/2017/06/05/computing-image-colorfulness-with-opencv-and-python/
         color_array = []
         for i in range(0, 4):
-            image = cv2.imread("SMALL_CELL.%d.png" % color_counter)
+            image = cv2.imread(os.path.join(path,"SMALL_CELL.%d.png" % color_counter))
             C = image_colorfulness(image)
             # display the colorfulness score on the image
             color_array.append(C)
             cv2.putText(image, "{:.2f}".format(C), (40, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
-            cv2.imwrite("SMALL_CELL.%d.png" % color_counter, image)
+            cv2.imwrite(os.path.join(path,"SMALL_CELL.%d.png" % color_counter), image)
             color_counter = (color_counter + 1)
 
         big_ass_color = big_ass_color + color_array
