@@ -58,8 +58,11 @@ for i in range(0,1):
     top = 730  # was 870
     right = 5680
     bottom = 3260  # was 3280
-
     path = '/Users/gregglickert/Documents/GitHub/YeastClassification/Classifyer_dump'
+    try:
+        os.makedirs(path)
+    except OSError:
+        pass
     img_crop = img.crop((left, top, right, bottom))
     # img_crop.show()
     img_crop.save(os.path.join(path,'Cropped_full_yeast.png'))
