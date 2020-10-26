@@ -9,7 +9,11 @@ from openpyxl import load_workbook
 import glob
 from imutils import paths
 import argparse
+from sklearn.cluster import KMeans
+import statistics
 
+big_ass_size = []
+big_ass_color = []
 """
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--images", required=True,
@@ -18,8 +22,8 @@ args = vars(ap.parse_args())
 """
 
 image_counter = 1
-df = pd.DataFrame({'Yeast row':() ,'Yeast col':() , 'Q1_size':() ,'Q2_size':() ,'Q3_size':() ,'Q4_size':(),
-                   'Q1_colorfullness':(),'Q2_colorfullness':(),'Q3_colorfullness':(),'Q4_colorfullness':()})
+df = pd.DataFrame({'Yeast row':() ,'Yeast col':() , 'Q1_size':() ,'Q2_size':() ,'Q3_size':() ,'Q4_size':(),'Avg_size':(),'Size_stdev':(),
+                   'Q1_colorfullness':(),'Q2_colorfullness':(),'Q3_colorfullness':(),'Q4_colorfullness':(), 'Avg_Color':(),'Color_stdev':()})
 writer = pd.ExcelWriter("A_test.xlsx",engine='openpyxl')
 df.to_excel(writer,startcol=0)
 writer.save()
@@ -47,7 +51,7 @@ for imagePath in paths.list_images(args["images"]):
     color_counter = 0
 """
 for i in range(0,1):
-    img = Image.open("IMG_0221.JPG")
+    img = Image.open("IMG_0214.JPG")
     color_counter = 0
 
     left = 1875  # was 2050
@@ -251,45 +255,43 @@ for i in range(0,1):
         XL_lower_bound = large_upper_bound + 1
         XL_upper_bound = 1000000
         cell_id_array = []
+        XL_counter = 0
+        large_counter = 0
 
 
         for i in range(0,len(stats)):
             if stats[i,cv2.CC_STAT_AREA] >= small_lower_bound and stats[i,cv2.CC_STAT_AREA] <= small_upper_bound and i >= 1:
-                small_cells = small_cells +1
                 small_cell_array_x.append(centroids[i][0])
                 small_cell_array_y.append(centroids[i][1])
                 area_array_small.append(stats[i,cv2.CC_STAT_AREA])
-
-
-        for i in range(0, small_cells, 1):
-            radius = 65
-            thickness = 2
-            color = (255, 0, 0) #blue
-            small_centroids = (int(small_cell_array_x[i])), (int(small_cell_array_y[i]))
-            cv2.circle(circle_me, small_centroids, radius, color, thickness)
-            cv2.putText(circle_me, "%d" % connected_counter, small_centroids, fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1,color=color,thickness=thickness)
-            connected_counter= connected_counter+1
-            cell_id_array.append(small_centroids)
+                radius = 65
+                thickness = 2
+                color = (255, 0, 0)  # blue
+                small_centroids = (int(small_cell_array_x[small_cells])), (int(small_cell_array_y[small_cells]))
+                small_cells = small_cells + 1
+                cv2.circle(circle_me, small_centroids, radius, color, thickness)
+                cv2.putText(circle_me, "%d" % connected_counter, small_centroids, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                            fontScale=1, color=color, thickness=thickness)
+                connected_counter = connected_counter + 1
+                cell_id_array.append(small_centroids)
 
 
         for i in range(0,len(stats)):
             if stats[i,cv2.CC_STAT_AREA] >= med_lower_bound and stats[i,cv2.CC_STAT_AREA] <= med_upper_bound and i >= 1: #3100 good for removing small ones
-                med_cells = med_cells +1
                 med_cells_array_x.append(centroids[i][0])
                 med_cells_array_y.append(centroids[i][1])
                 area_array_med.append((stats[i,cv2.CC_STAT_AREA]))
+                radius = 65
+                thickness = 2
+                color = (255, 255, 255)  ##white
+                med_centroids = (int(med_cells_array_x[med_cells])), (int(med_cells_array_y[med_cells]))
+                med_cells = med_cells + 1
+                cv2.circle(circle_me, med_centroids, radius, color, thickness)
+                cv2.putText(circle_me, "%d" % connected_counter, med_centroids, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                            fontScale=1, color=color, thickness=thickness)
+                connected_counter = connected_counter + 1
+                cell_id_array.append(med_centroids)
 
-
-        for i in range(0, med_cells, 1):
-            radius = 65
-            thickness = 2
-            color = (255, 255, 255) ##white
-            med_centroids = (int(med_cells_array_x[i])), (int(med_cells_array_y[i]))
-            cv2.circle(circle_me, med_centroids, radius, color, thickness)
-            cv2.putText(circle_me, "%d" % connected_counter, med_centroids, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                        fontScale=1, color=color, thickness=thickness)
-            connected_counter = connected_counter + 1
-            cell_id_array.append(med_centroids)
 
         for i in range(0,len(stats)):
             if stats[i,cv2.CC_STAT_AREA] >= large_lower_bound and stats[i,cv2.CC_STAT_AREA] <= large_upper_bound and i >= 1:
@@ -300,32 +302,18 @@ for i in range(0,1):
                 radius = 65
                 thickness = 2
                 color = (0, 255, 100)  # green
-                print(i)
-                print(large_cell_array_x)
-                print(large_cell_array_y)
-                large_centroids = (int(large_cell_array_x[i-1])), (int(large_cell_array_y[i-1]))
+                large_centroids = (int(large_cell_array_x[large_counter])), (int(large_cell_array_y[large_counter]))
+                large_counter =+ 1
                 cv2.circle(circle_me, large_centroids, radius, color, thickness)
-                cv2.putText(circle_me, "%d" % stats[(i), cv2.CC_STAT_AREA], large_centroids,
+                cv2.putText(circle_me, "%d" % connected_counter, large_centroids,
                             fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                             fontScale=1, color=color, thickness=thickness)
                 connected_counter = connected_counter + 1
                 cell_id_array.append(large_centroids)
 
-            """
-        for i in range(0, large_cells, 1):
-            radius = 65
-            thickness = 2
-            color = (0, 255, 100) #green
-            large_centroids = (int(large_cell_array_x[i])), (int(large_cell_array_y[i]))
-            cv2.circle(circle_me, large_centroids, radius, color, thickness)
-            cv2.putText(circle_me, "%d" % stats[(i+1),cv2.CC_STAT_AREA], large_centroids, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                        fontScale=1, color=color, thickness=thickness)
-            connected_counter = connected_counter + 1
-            cell_id_array.append(large_centroids)
-            """
 
         for i in range(0,len(stats)):
-            if stats[i,cv2.CC_STAT_AREA] >= XL_lower_bound and stats[i,cv2.CC_STAT_AREA] <= XL_upper_bound and i >= 1: #took out and i>1
+            if stats[i,cv2.CC_STAT_AREA] >= XL_lower_bound and stats[i,cv2.CC_STAT_AREA] <= XL_upper_bound and i >=1: #took out and i>1
                 XL_cells = XL_cells + 1
                 XL_cell_array_x.append(centroids[i][0])
                 XL_cell_array_y.append(centroids[i][1])
@@ -333,92 +321,73 @@ for i in range(0,1):
                 radius = 65
                 thickness = 2
                 color = (0, 0, 0)  # black
-                XL_centroids = (int(XL_cell_array_x[i-1])), (int(XL_cell_array_y[i-1]))
+                print("centroids")
+                print(XL_cell_array_x)
+                print((XL_cell_array_y))
+                XL_centroids = (int(XL_cell_array_x[XL_counter])), (int(XL_cell_array_y[XL_counter]))
+                XL_counter = XL_counter +1
                 cv2.circle(circle_me, XL_centroids, radius, color, thickness)
-                cv2.putText(circle_me, "%d" % stats[(i), cv2.CC_STAT_AREA], XL_centroids,
+                cv2.putText(circle_me, "%d" % connected_counter, XL_centroids,
                             fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                             fontScale=1, color=color, thickness=thickness)
                 connected_counter = connected_counter + 1
                 cell_id_array.append(XL_centroids)
 
-        """
-        for i in range(0, XL_cells, 1):
-            radius = 65
-            thickness = 2
-            color = (0, 0, 0) #black
-            XL_centroids = (int(XL_cell_array_x[i])), (int(XL_cell_array_y[i]))
-            cv2.circle(circle_me, XL_centroids, radius, color, thickness)
-            cv2.putText(circle_me, "%d" % stats[(i+1),cv2.CC_STAT_AREA], XL_centroids, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                        fontScale=1, color=color, thickness=thickness)
-            connected_counter = connected_counter + 1
-            cell_id_array.append(XL_centroids)
-            """
-
-
-
-
-        area_array = area_array_small + area_array_med + area_array_large + area_array_XL
-        print(area_array)
-        """
-        for i in range(0,len(stats),1):
-            print(i)
-            if (centroids[i][0] >= 50 and centroids[i][0] <= 90 and centroids[i][1] >= 200 and centroids[i][1] <= 250):
-                Fuck_arrays.append(area_array[i])
-            if (centroids[i][0] >= 200 and centroids[i][0] <= 250 and centroids[i][1] >= 200 and centroids[i][1] <= 250):
-                Fuck_arrays.append(area_array[i])
-            if (centroids[i][0] >= 50 and centroids[i][0] <= 90 and centroids[i][1] >= 50 and centroids[i][1] <= 90):
-                Fuck_arrays.append(area_array[i])
-            if (centroids[i][0] >= 200 and centroids[i][0] <= 250 and centroids[i][1] >= 200 and centroids[i][1] <= 250):
-                Fuck_arrays.append(area_array[i])
-
-        print(Fuck_arrays)
-        """
-
-
-
-
-        print(len(area_array))
-        print("Currently on cell %d" %counter)
-        print(area_array)
-        print(area_array_small)
-        print(area_array_med)
-        print(area_array_large)
-        print(area_array_XL)
-       # print(cell_id_array)
-
-        """
-        color_cell = []
-        for i in range(0,4):
-            if(cell_id_array[i] >= 100):
-                color_cell.append(cell_id_array[i])
-            print(color_cell)
-        if(counter ==92):
-            break
-        """
-        #print(area_array)
-        #print(connected_counter)
 
         cv2.imwrite("centroid test.png", circle_me)
 
+        area_array = area_array_small + area_array_med + area_array_large + area_array_XL
 
-        if(len(stats)>5):
+        """
+        if (len(stats) > 5):
             image = Image.open("centroid test.png")
             image.show()
-            print("problem with cluster %d error check centroid test" %counter)
+            print("problem with cluster %d error check centroid test" % counter)
             removed = input("Enter value: ")
             image.close()
-            del area_array[(int (removed))]
+            del area_array[(int(removed))]
             print(area_array)
-
-        if(len(stats)<4):
-            print("too few decteted on %d" %counter)
+        """
+        if (len(stats) < 4):
+            print("too few decteted on %d" % counter)
             print((len(stats)))
             for i in range((len(stats)), 5, 1):
                 area_array.append(0)
             print(area_array)
 
-        #plt.imshow(heavy_fill_blue)
-        #plt.show()
+        print("Currently on cell %d" % counter)
+        Fuck_arrays = []
+        print(centroids)
+        for i in range(0,(len(stats)),1):
+            if (centroids[i][0] >= 50 and centroids[i][0] <= 100 and centroids[i][1] >= 50 and centroids[i][1] <= 90):
+                print("%d is in 1" %i)
+                Fuck_arrays.append(stats[i,cv2.CC_STAT_AREA])
+        for i in range(0, (len(stats)), 1):
+            if (centroids[i][0] >= 200 and centroids[i][0] <= 270 and centroids[i][1] >= 50 and centroids[i][1] <= 90):
+                Fuck_arrays.append(stats[i, cv2.CC_STAT_AREA])
+                print("%d is in 2" %i)
+        for i in range(0, (len(stats)), 1):
+            if (centroids[i][0] >= 50 and centroids[i][0] <= 100 and centroids[i][1] >= 200 and centroids[i][1] <= 270):
+                Fuck_arrays.append(stats[i, cv2.CC_STAT_AREA])
+                print("%d is in 3" %i)
+        for i in range(0, (len(stats)), 1):
+            if (centroids[i][0] >= 200 and centroids[i][0] <= 270 and centroids[i][1] >= 200 and centroids[i][1] <= 270):
+                Fuck_arrays.append(stats[i, cv2.CC_STAT_AREA])
+                print("%d is in 4" %i)
+
+        if (len(stats) < 4):
+            print("too few decteted on %d" % counter)
+            print((len(stats)))
+            for i in range((len(stats)), 5, 1):
+                Fuck_arrays.append(0)
+        print(Fuck_arrays)
+
+        big_ass_size = big_ass_size + Fuck_arrays
+
+        avg_size = (Fuck_arrays[0] +Fuck_arrays[1] +Fuck_arrays[2] + Fuck_arrays[3])/4
+        print(avg_size)
+        std =np.std(np.array(Fuck_arrays))
+        print(std)
 
         def image_colorfulness(image):
             # split the image into its respective RGB components
@@ -448,6 +417,10 @@ for i in range(0,1):
             cv2.imwrite("SMALL_CELL.%d.png" % color_counter, image)
             color_counter = (color_counter + 1)
 
+        big_ass_color = big_ass_color + color_array
+        avg_color = (color_array[0] + color_array[1] + color_array[2] + color_array[3])/4
+        std_color = np.std(np.array(color_array))
+
         if (len(color_array) < 4):
             print("too few decteted on %d" % counter)
             print((len(color_array)))
@@ -457,9 +430,9 @@ for i in range(0,1):
         print(color_array)
 
         new_df = pd.DataFrame(
-            {'Yeast row': (toomanycounter), 'Yeast col': (anothercounter), 'Q1_size': (area_array[0]), 'Q2_size': (area_array[1]),
-             'Q3_size': (area_array[2]), 'Q4_size': (area_array[3]), 'Q1_color':(color_array[0]), 'Q2_color':(color_array[1])
-            ,'Q3_color':(color_array[2]), 'Q4_color':(color_array[3])},index=[0])
+            {'Yeast row': (toomanycounter), 'Yeast col': (anothercounter), 'Q1_size': (Fuck_arrays[0]), 'Q2_size': (Fuck_arrays[1]),
+             'Q3_size': (Fuck_arrays[2]), 'Q4_size': (Fuck_arrays[3]),'Avg_size':(avg_size),'Size_stdev':(std), 'Q1_color':(color_array[0]), 'Q2_color':(color_array[1])
+            ,'Q3_color':(color_array[2]), 'Q4_color':(color_array[3]),'Avg_color':(avg_color),'Color_stdev':(std_color)},index=[0])
         writer = pd.ExcelWriter('A_test.xlsx', engine='openpyxl')
         writer.book = load_workbook('A_test.xlsx')
         writer.sheets = dict((ws.title, ws) for ws in writer.book.worksheets)
@@ -481,3 +454,31 @@ for i in range(0,1):
     writer.close()
     image_counter = image_counter+1
 
+"""
+imdir = '/Users/gregglickert/PycharmProjects/cc_test/CLUSTERD'
+targetdir = "/Users/gregglickert/PycharmProjects/cc_test/testing folder"
+number_clusters = 5
+
+# Loop over files and get features
+filelist = glob.glob(os.path.join(imdir, '*.png'))
+filelist.sort()
+
+kmeans = KMeans(n_clusters=number_clusters, random_state=0).fit(np.array(big_ass_size))
+
+try:
+    os.makedirs(targetdir)
+except OSError:
+    pass
+# Copy with cluster name
+print("\n")
+for i, m in enumerate(kmeans.labels_): #changed from kmeans to dbscan
+    print("    Copy: %s / %s" %(i, len(kmeans.labels_)), end="\r") #same here
+    shutil.move(filelist[i], '/Users/gregglickert/PycharmProjects/cc_test/testing folder2')
+"""
+print(len(big_ass_size))
+print(big_ass_size)
+print(len(big_ass_color))
+print(big_ass_color)
+
+plt.hist(big_ass_size)
+plt.show()
