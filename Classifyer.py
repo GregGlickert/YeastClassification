@@ -17,7 +17,7 @@ big_ass_color = []
 """
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--images", required=True,
-	help="path to input directory of images")
+help="path to input directory of images")
 args = vars(ap.parse_args())
 """
 
@@ -50,15 +50,16 @@ for imagePath in paths.list_images(args["images"]):
     img.show()
     color_counter = 0
 """
+
 for i in range(0,1):
     img = Image.open("/Users/gregglickert/Documents/GitHub/YeastClassification/Test_images/IMG_0221.JPG")
     color_counter = 0
-
+    dire = os.getcwd()
     left = 1875  # was 2050
     top = 730  # was 870
     right = 5680
     bottom = 3260  # was 3280
-    path = '/Users/gregglickert/Documents/GitHub/YeastClassification/Classifyer_dump'
+    path = dire +'/Classifyer_dump'
     try:
         os.makedirs(path)
     except OSError:
@@ -363,15 +364,15 @@ for i in range(0,1):
         Fuck_arrays = []
         print(centroids)
         for i in range(0,(len(stats)),1):
-            if (centroids[i][0] >= 50 and centroids[i][0] <= 100 and centroids[i][1] >= 50 and centroids[i][1] <= 90):
+            if (centroids[i][0] >= 40 and centroids[i][0] <= 110 and centroids[i][1] >= 40 and centroids[i][1] <= 110):
                 print("%d is in 1" %i)
                 Fuck_arrays.append(stats[i,cv2.CC_STAT_AREA])
         for i in range(0, (len(stats)), 1):
-            if (centroids[i][0] >= 200 and centroids[i][0] <= 270 and centroids[i][1] >= 50 and centroids[i][1] <= 90):
+            if (centroids[i][0] >= 200 and centroids[i][0] <= 270 and centroids[i][1] >= 40 and centroids[i][1] <= 110):
                 Fuck_arrays.append(stats[i, cv2.CC_STAT_AREA])
                 print("%d is in 2" %i)
         for i in range(0, (len(stats)), 1):
-            if (centroids[i][0] >= 50 and centroids[i][0] <= 100 and centroids[i][1] >= 200 and centroids[i][1] <= 270):
+            if (centroids[i][0] >= 40 and centroids[i][0] <= 110 and centroids[i][1] >= 200 and centroids[i][1] <= 270):
                 Fuck_arrays.append(stats[i, cv2.CC_STAT_AREA])
                 print("%d is in 3" %i)
         for i in range(0, (len(stats)), 1):
