@@ -21,13 +21,13 @@ help="path to input directory of images")
 args = vars(ap.parse_args())
 
 
-image_counter = 1
-df = pd.DataFrame({'Yeast row':() ,'Yeast col':() , 'Q1_size':() ,'Q2_size':() ,'Q3_size':() ,'Q4_size':(),'Avg_size':(),'Size_stdev':(),
+image_counter = 0
+df = pd.DataFrame({'Plate Number':(),'Yeast row':() ,'Yeast col':() , 'Q1_size':() ,'Q2_size':() ,'Q3_size':() ,'Q4_size':(),'Avg_size':(),'Size_stdev':(),
                    'Q1_colorfullness':(),'Q2_colorfullness':(),'Q3_colorfullness':(),'Q4_colorfullness':(), 'Avg_Color':(),'Color_stdev':()})
 writer = pd.ExcelWriter("A_test.xlsx",engine='openpyxl')
 df.to_excel(writer,startcol=0)
 writer.save()
-
+"""
 new_df = pd.DataFrame({'Plate Number %d' % image_counter})
 writer = pd.ExcelWriter('A_test.xlsx', engine='openpyxl')
 writer.book = load_workbook('A_test.xlsx')
@@ -35,7 +35,8 @@ writer.sheets = dict((ws.title, ws) for ws in writer.book.worksheets)
 reader = pd.read_excel(r'A_test.xlsx')
 new_df.to_excel(writer, index=False, header=False, startcol=0, startrow=len(reader) + 1)
 writer.close()
-image_counter = image_counter+1
+"""
+
 
             #https://medium.com/better-programming/using-python-pandas-with-excel-d5082102ca27
 
@@ -52,7 +53,7 @@ for imagePath in paths.list_images(args["images"]):
 
 
 #for i in range(0,1):
-    #img = Image.open("/Users/gregglickert/Documents/GitHub/YeastClassification/Test_images/IMG_0221.JPG")
+   # img = Image.open("/Users/gregglickert/Documents/GitHub/YeastClassification/Test_images_good/IMG_0221.JPG")
     color_counter = 0
     dire = os.getcwd()
     left = 1875  # was 2050
@@ -169,6 +170,7 @@ for imagePath in paths.list_images(args["images"]):
     counter = 0
     toomanycounter = 1
     anothercounter = 1
+    image_counter = image_counter + 1
     for i in range(0,96): # was 96
         cropped_img = cv2.imread(os.path.join(path,'Yeast_Cluster_Threshold.%d.png' %counter), cv2.IMREAD_UNCHANGED) #changed from Yeast_Cluster.%d.png  %counter
         #blue_image = pcv.rgb2gray_lab(cropped_img, 'b') # can do l a or b
@@ -438,8 +440,9 @@ for imagePath in paths.list_images(args["images"]):
 
         print(color_array)
 
+        char = chr(toomanycounter+64)
         new_df = pd.DataFrame(
-            {'Yeast row': (toomanycounter), 'Yeast col': (anothercounter), 'Q1_size': (Fuck_arrays[0]), 'Q2_size': (Fuck_arrays[1]),
+            {'Plate Number':(image_counter),'Yeast row': (char), 'Yeast col': (anothercounter), 'Q1_size': (Fuck_arrays[0]), 'Q2_size': (Fuck_arrays[1]),
              'Q3_size': (Fuck_arrays[2]), 'Q4_size': (Fuck_arrays[3]),'Avg_size':(avg_size),'Size_stdev':(std), 'Q1_color':(color_array[0]), 'Q2_color':(color_array[1])
             ,'Q3_color':(color_array[2]), 'Q4_color':(color_array[3]),'Avg_color':(avg_color),'Color_stdev':(std_color)},index=[0])
         writer = pd.ExcelWriter('A_test.xlsx', engine='openpyxl')
@@ -453,6 +456,7 @@ for imagePath in paths.list_images(args["images"]):
             anothercounter = 1
             toomanycounter = toomanycounter + 1
 
+"""
         counter = counter + 1
     new_df = pd.DataFrame({'Plate Number %d' % image_counter})
     writer = pd.ExcelWriter('A_test.xlsx', engine='openpyxl')
@@ -462,6 +466,7 @@ for imagePath in paths.list_images(args["images"]):
     new_df.to_excel(writer, index=False, header=False, startcol=0, startrow=len(reader) + 1)
     writer.close()
     image_counter = image_counter+1
+"""
 
 """
 imdir = '/Users/gregglickert/PycharmProjects/cc_test/CLUSTERD'
@@ -483,7 +488,7 @@ print("\n")
 for i, m in enumerate(kmeans.labels_): #changed from kmeans to dbscan
     print("    Copy: %s / %s" %(i, len(kmeans.labels_)), end="\r") #same here
     shutil.move(filelist[i], '/Users/gregglickert/PycharmProjects/cc_test/testing folder2')
-"""
+
 print(len(big_ass_size))
 print(big_ass_size)
 print(len(big_ass_color))
@@ -491,3 +496,4 @@ print(big_ass_color)
 
 plt.hist(big_ass_size)
 plt.show()
+"""
