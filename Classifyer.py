@@ -14,12 +14,12 @@ import statistics
 
 big_ass_size = []
 big_ass_color = []
-"""
+
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--images", required=True,
 help="path to input directory of images")
 args = vars(ap.parse_args())
-"""
+
 
 image_counter = 1
 df = pd.DataFrame({'Yeast row':() ,'Yeast col':() , 'Q1_size':() ,'Q2_size':() ,'Q3_size':() ,'Q4_size':(),'Avg_size':(),'Size_stdev':(),
@@ -44,15 +44,15 @@ image_counter = image_counter+1
 
 #path = '/Users/gregglickert/PycharmProjects/cc_test/A_folder/*.JPG'
 #for filename in glob.glob(path):
-"""
+
 for imagePath in paths.list_images(args["images"]):
     img = Image.open((imagePath))
     img.show()
     color_counter = 0
-"""
 
-for i in range(0,1):
-    img = Image.open("/Users/gregglickert/Documents/GitHub/YeastClassification/Test_images/IMG_0221.JPG")
+
+#for i in range(0,1):
+    #img = Image.open("/Users/gregglickert/Documents/GitHub/YeastClassification/Test_images/IMG_0221.JPG")
     color_counter = 0
     dire = os.getcwd()
     left = 1875  # was 2050
