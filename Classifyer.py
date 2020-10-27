@@ -387,6 +387,10 @@ for imagePath in paths.list_images(args["images"]):
                 Fuck_arrays.append(0)
         print(Fuck_arrays)
 
+        if(len(Fuck_arrays) >= 5):
+            print("problem on cell %d" %counter)
+            exit(-1)
+
         big_ass_size = big_ass_size + Fuck_arrays
 
         avg_size = (Fuck_arrays[0] +Fuck_arrays[1] +Fuck_arrays[2] + Fuck_arrays[3])/4
