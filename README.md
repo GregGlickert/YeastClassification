@@ -1,13 +1,12 @@
 # YeastClassification
 To run on command line
 command - python Classifyer.py --images 'path for image folder here'
-
 ## Requires python install
 
 Environment can be built from included yml
 command - conda env create -f TEST_ENVIRONMENT.yml
 
-Libraries needed
+### Libraries needed this may change as the project continues 
 
 PIL
 
