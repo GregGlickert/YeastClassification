@@ -6,7 +6,7 @@ command - python Classifyer.py --images 'path for image folder here'
 Environment can be built from included yml\
 command - conda env create -f TEST_ENVIRONMENT.yml
 
-### Using PyPi
+### Using PyPi (subject to change still)
 OpenCV // pip install opencv-python
 
 Numpy // pip install numpy

@@ -9,6 +9,7 @@ from openpyxl import load_workbook
 import glob
 from imutils import paths
 import argparse
+import sys
 from sklearn.cluster import KMeans
 import statistics
 
@@ -19,59 +20,69 @@ cluster_color_array = []
 cluster_color_std_array = []
 cluster_size_array = []
 cluster_size_std_array = []
+image_counter = 1
 
-"""
+
 ap = argparse.ArgumentParser()
-ap.add_argument("-i", "--images", required=True,
+ap.add_argument("-i", "--images", required=False,
                 help="path to input directory of images")
 args = vars(ap.parse_args())
-"""
 
-image_counter = 1
-df = pd.DataFrame(
-    {'Plate Number': (), 'Yeast row': (), 'Yeast col': (), 'Q1_size': (), 'Q2_size': (), 'Q3_size': (), 'Q4_size': (),
-     'Avg_size': (), 'Size_stdev': (),
-     'Q1_colorfullness': (), 'Q2_colorfullness': (), 'Q3_colorfullness': (), 'Q4_colorfullness': (), 'Avg_Color': (),
-     'Color_stdev': ()})
-writer = pd.ExcelWriter("A_test.xlsx", engine='openpyxl')
-df.to_excel(writer, startcol=0)
-writer.save()
-# https://medium.com/better-programming/using-python-pandas-with-excel-d5082102ca27
+def initexecl():
+    df = pd.DataFrame(
+        {'Plate Number': (), 'Yeast row': (), 'Yeast col': (), 'Q1_size': (), 'Q2_size': (), 'Q3_size': (),
+         'Q4_size': (),
+         'Avg_size': (), 'Size_stdev': (),
+         'Q1_colorfullness': (), 'Q2_colorfullness': (), 'Q3_colorfullness': (), 'Q4_colorfullness': (),
+         'Avg_Color': (),
+         'Color_stdev': ()})
+    writer = pd.ExcelWriter("A_test.xlsx", engine='openpyxl')
+    df.to_excel(writer, startcol=0)
+    writer.save()
+    # https://medium.com/better-programming/using-python-pandas-with-excel-d5082102ca27
 
-"""
-for imagePath in paths.list_images(args["images"]):
-    img = Image.open(imagePath)
+initexecl()
+
+imagePath = sorted(list(paths.list_images(args["images"])))
+for i in range(len(imagePath)):
+    img = Image.open(imagePath[i])
     img.show()
-"""
+    base = os.path.basename(imagePath[i])
+    print("PROCESSING IMAGE %s..." %base)
+#for i in range(0,1):
+    #img = Image.open("/Users/gregglickert/PycharmProjects/cc_test/IMG_0221.JPG")
 
-for i in range(0,1):
-    img = Image.open("/Users/gregglickert/PycharmProjects/cc_test/IMG_0221.JPG")
-    dire = os.getcwd()
-    left = 1875  # was 2050
-    top = 730  # was 870
-    right = 5680
-    bottom = 3260  # was 3280
-    path = dire + '/Classifyer_dump'
-    try:
-        os.makedirs(path)
-    except OSError:
-        pass
-    img_crop = img.crop((left, top, right, bottom))
-    # img_crop.show()
-    img_crop.save(os.path.join(path, 'Cropped_full_yeast.png'))
-    circle_me = cv2.imread(os.path.join(path, "Cropped_full_yeast.png"))
-    cropped_img = cv2.imread(
-        os.path.join(path, "Cropped_full_yeast.png"))  # changed from Yeast_Cluster.%d.png  %counter
-    blue_image = pcv.rgb2gray_lab(cropped_img, 'b')  # can do l a or b
-    Gaussian_blue = cv2.adaptiveThreshold(blue_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 241,
-                                          -1)  # set to 499 111 241
-    cv2.imwrite(os.path.join(path, "blue_test.png"), Gaussian_blue)
-    blur_image = pcv.median_blur(Gaussian_blue, 10)
-    heavy_fill_blue = pcv.fill(blur_image, 400)  # value 400
-    cv2.imwrite(os.path.join(path, "Cropped_Threshold.png"), heavy_fill_blue)
+
+
+    def initcrop(img):
+        left = 1875  # was 2050
+        top = 730  # was 870
+        right = 5680
+        bottom = 3260  # was 3280
+        dire = os.getcwd()
+        path = dire + '/Classifyer_dump'
+        try:
+            os.makedirs(path)
+        except OSError:
+            pass
+        img_crop = img.crop((left, top, right, bottom))
+        # img_crop.show()
+        img_crop.save(os.path.join(path, 'Cropped_full_yeast.png'))
+        circle_me = cv2.imread(os.path.join(path, "Cropped_full_yeast.png"))
+        cropped_img = cv2.imread(
+            os.path.join(path, "Cropped_full_yeast.png"))  # changed from Yeast_Cluster.%d.png  %counter
+        blue_image = pcv.rgb2gray_lab(cropped_img, 'b')  # can do l a or b
+        Gaussian_blue = cv2.adaptiveThreshold(blue_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 241,
+                                              -1)  # set to 499 111 241
+        cv2.imwrite(os.path.join(path, "blue_test.png"), Gaussian_blue)
+        blur_image = pcv.median_blur(Gaussian_blue, 10)
+        heavy_fill_blue = pcv.fill(blur_image, 400)  # value 400
+        cv2.imwrite(os.path.join(path, "Cropped_Threshold.png"), heavy_fill_blue)
 
 
     def cluster_maker():
+        dire = os.getcwd()
+        path = dire + '/Classifyer_dump'
         counter = 0
         counter1 = 0  # normally 0
         im = Image.open(os.path.join(path, "Cropped_full_yeast.png"))  # was "Cropped_full_yeast.png"
@@ -105,7 +116,7 @@ for i in range(0,1):
         counter1 = 0
 
         for i in range(0, 96):
-            print("TIMES THRU big loop %d" % i)
+            print("Cropping Cluster %d" % i)
             im = Image.open(os.path.join(path, "Yeast_Cluster.%d.png" % i))
             sizeX, sizeY = im.size
             im_sizeX = round(sizeX / 2)
@@ -163,6 +174,8 @@ for i in range(0,1):
 
 
     def connected_comps(counter):
+        dire = os.getcwd()
+        path = dire + '/Classifyer_dump'
         cropped_img = cv2.imread(os.path.join(path, 'Yeast_Cluster_Threshold.%d.png' % counter),
                                  cv2.IMREAD_UNCHANGED)  # changed from Yeast_Cluster.%d.png  %counter
         circle_me = cv2.imread(os.path.join(path, "Yeast_Cluster.%d.png" % counter))
@@ -381,6 +394,8 @@ for i in range(0,1):
 
 
     def colorful_writer(color_counter):
+        dire = os.getcwd()
+        path = dire + '/Classifyer_dump'
         # https://www.pyimagesearch.com/2017/06/05/computing-image-colorfulness-with-opencv-and-python/
         color_array = []
         for i in range(0, 4):
@@ -425,17 +440,18 @@ for i in range(0,1):
         writer.close()
 
 
-    cluster_maker()
     toomanycounter = 1
     anothercounter = 1
     color_counter = 0
+    initcrop(img)
+    cluster_maker()
     for c in range(0, 96):
         returned_size = connected_comps(c) #inputs is counter for which cluster to process and output is an array with size, avg size, and std
         print(returned_size)
         returned_color = colorful_writer(color_counter) #input is color_counter so knows which cell to process output is an array with colorfulness, avg color, and std
         print((returned_color))
         excel_writer(toomanycounter, anothercounter, image_counter, returned_size[0], returned_size[1],
-                     returned_size[2], returned_color[0], returned_color[1], returned_color[2])
+                     returned_size[2], returned_color[0], returned_color[1], returned_color[2]) #outputs excel sheet
         anothercounter = anothercounter + 1
         if anothercounter > 12:
             anothercounter = 1
@@ -443,8 +459,6 @@ for i in range(0,1):
         color_counter = returned_color[3]
 
     image_counter = image_counter + 1
-
-
 
 
 """
