@@ -24,3 +24,5 @@ openpyxl // pip install openpyxl
 imutils // pip install imutils
 
 argparse // pip install argparse
+
+sklearn // pip install -U scikit-learn
