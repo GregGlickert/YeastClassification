@@ -7,22 +7,23 @@ Environment can be built from included yml
 command - conda env create -f TEST_ENVIRONMENT.yml
 
 ### Using PyPi
-PlantCV // pip install plantcv
-
-openCV // pip install opencv-python
+OpenCV // pip install opencv-python
 
 Numpy // pip install numpy
 
-shutil // pip install pytest-shutil
+Matplotlib // pip install matplotlib
 
-pandas // pip install pandas
+Sklearn // pip install -U scikit-learn
 
-matplotlib // pip install matplotlib
+PlantCV // pip install plantcv
 
-openpyxl // pip install openpyxl
+Shutil // pip install pytest-shutil
 
-imutils // pip install imutils
+Pandas // pip install pandas
 
-argparse // pip install argparse
+Openpyxl // pip install openpyxl
 
-sklearn // pip install -U scikit-learn
+Imutils // pip install imutils
+
+Argparse // pip install argparse
+
