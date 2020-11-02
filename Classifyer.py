@@ -430,9 +430,9 @@ for i in range(0,1):
     anothercounter = 1
     color_counter = 0
     for c in range(0, 96):
-        returned_size = connected_comps(c)
+        returned_size = connected_comps(c) #inputs is counter for which cluster to process and output is an array with size, avg size, and std
         print(returned_size)
-        returned_color = colorful_writer(color_counter)
+        returned_color = colorful_writer(color_counter) #input is color_counter so knows which cell to process output is an array with colorfulness, avg color, and std
         print((returned_color))
         excel_writer(toomanycounter, anothercounter, image_counter, returned_size[0], returned_size[1],
                      returned_size[2], returned_color[0], returned_color[1], returned_color[2])
@@ -443,6 +443,9 @@ for i in range(0,1):
         color_counter = returned_color[3]
 
     image_counter = image_counter + 1
+
+
+
 
 """
 for i in range(0,96):
