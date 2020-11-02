@@ -1,29 +1,30 @@
 # YeastClassification
-To run on command line type
-python Classifyer.py --images 'path for image folder here'
+To run on command line
+command - python Classifyer.py --images 'path for image folder here'
+
+Requires python install
+
+Environment can be built from included yml
+command - conda env create -f TEST_ENVIRONMENT.yml
 
 Libraries needed
 
 PIL
 
-PlantCV
+PlantCV // pip install plantcv
 
-openCV
+openCV // pip install opencv-python
 
-Numpy
+Numpy // pip install numpy
 
-OS
+shutil // pip install pytest-shutil
 
-shutil
+pandas // pip install pandas
 
-pandas
+matplotlib // pip install matplotlib
 
-matplotlib
+openpyxl // pip install openpyxl
 
-openpyxl
+imutils // pip install imutils
 
-glob
-
-imutils
-
-argparse
+argparse // pip install argparse
