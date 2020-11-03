@@ -49,7 +49,7 @@ for i in range(len(imagePath)):
     base = os.path.basename(imagePath[i])
     print("PROCESSING IMAGE %s..." %base)
 
-    def initcrop(img):
+    def initcrop(img): #change line 70 for threshold adj
         left = 1875  # was 2050
         top = 730  # was 870
         right = 5680
