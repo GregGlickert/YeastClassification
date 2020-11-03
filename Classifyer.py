@@ -14,12 +14,11 @@ from sklearn.cluster import KMeans
 import statistics
 
 total_size_array = []
+total_size_avg_array = []
+total_size_std_array = []
 total_color_array = []
-cluster_array = []
-cluster_color_array = []
-cluster_color_std_array = []
-cluster_size_array = []
-cluster_size_std_array = []
+total_color_avg_array = []
+total_color_std_array = []
 image_counter = 1
 
 
@@ -30,14 +29,14 @@ args = vars(ap.parse_args())
 
 def initexecl():
     df = pd.DataFrame(
-        {'Plate Number': (), 'Yeast row': (), 'Yeast col': (), 'Q1_size': (), 'Q2_size': (), 'Q3_size': (),
+        {'Image processed':(),'Plate number': (), 'Yeast row': (), 'Yeast col': (), 'Q1_size': (), 'Q2_size': (), 'Q3_size': (),
          'Q4_size': (),
          'Avg_size': (), 'Size_stdev': (),
          'Q1_colorfullness': (), 'Q2_colorfullness': (), 'Q3_colorfullness': (), 'Q4_colorfullness': (),
-         'Avg_Color': (),
+         'Avg_color': (),
          'Color_stdev': ()})
     writer = pd.ExcelWriter("A_test.xlsx", engine='openpyxl')
-    df.to_excel(writer, startcol=0)
+    df.to_excel(writer,index=False, header=True, startcol=0)
     writer.save()
     # https://medium.com/better-programming/using-python-pandas-with-excel-d5082102ca27
 
@@ -49,10 +48,6 @@ for i in range(len(imagePath)):
     img.show()
     base = os.path.basename(imagePath[i])
     print("PROCESSING IMAGE %s..." %base)
-#for i in range(0,1):
-    #img = Image.open("/Users/gregglickert/PycharmProjects/cc_test/IMG_0221.JPG")
-
-
 
     def initcrop(img):
         left = 1875  # was 2050
@@ -73,7 +68,7 @@ for i in range(len(imagePath)):
             os.path.join(path, "Cropped_full_yeast.png"))  # changed from Yeast_Cluster.%d.png  %counter
         blue_image = pcv.rgb2gray_lab(cropped_img, 'b')  # can do l a or b
         Gaussian_blue = cv2.adaptiveThreshold(blue_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 241,
-                                              -1)  # set to 499 111 241
+                                              -1)  # For liz's pictures 241
         cv2.imwrite(os.path.join(path, "blue_test.png"), Gaussian_blue)
         blur_image = pcv.median_blur(Gaussian_blue, 10)
         heavy_fill_blue = pcv.fill(blur_image, 400)  # value 400
@@ -370,8 +365,6 @@ for i in range(len(imagePath)):
         std = np.std(np.array(cc_size_array))
         print(std)
 
-        cluster_size_array.append(avg_size)
-        cluster_size_std_array.append(std)
 
         return cc_size_array, avg_size, std
 
@@ -410,8 +403,6 @@ for i in range(len(imagePath)):
         # total_color_array = total_color_array + color_array
         avg_color = (color_array[0] + color_array[1] + color_array[2] + color_array[3]) / 4
         std_color = np.std(np.array(color_array))
-        cluster_color_array.append(avg_color)
-        cluster_color_std_array.append(std_color)
 
         if (len(color_array) < 4):
             print((len(color_array)))
@@ -422,11 +413,11 @@ for i in range(len(imagePath)):
         return color_array, avg_color, std_color, color_counter
 
 
-    def excel_writer(toomanycounter, anothercounter, image_counter, cc_size_array, avg_size, std, color_array, avg_color,
+    def excel_writer(base,toomanycounter, anothercounter, image_counter, cc_size_array, avg_size, std, color_array, avg_color,
                      std_color):
         char = chr(toomanycounter + 64)
         new_df = pd.DataFrame(
-            {'Plate Number': (image_counter), 'Yeast row': (char), 'Yeast col': (anothercounter),
+            {'Image processed':(base),'Plate Number': (image_counter), 'Yeast row': (char), 'Yeast col': (anothercounter),
              'Q1_size': (cc_size_array[0]), 'Q2_size': (cc_size_array[1]),
              'Q3_size': (cc_size_array[2]), 'Q4_size': (cc_size_array[3]), 'Avg_size': (avg_size), 'Size_stdev': (std),
              'Q1_color': (color_array[0]), 'Q2_color': (color_array[1])
@@ -436,7 +427,7 @@ for i in range(len(imagePath)):
         writer.book = load_workbook('A_test.xlsx')
         writer.sheets = dict((ws.title, ws) for ws in writer.book.worksheets)
         reader = pd.read_excel(r'A_test.xlsx')
-        new_df.to_excel(writer, index=False, header=False, startcol=1, startrow=len(reader) + 1)
+        new_df.to_excel(writer, index=False, header=False, startcol=0, startrow=len(reader) + 1)
         writer.close()
 
 
@@ -450,17 +441,31 @@ for i in range(len(imagePath)):
         print(returned_size)
         returned_color = colorful_writer(color_counter) #input is color_counter so knows which cell to process output is an array with colorfulness, avg color, and std
         print((returned_color))
-        excel_writer(toomanycounter, anothercounter, image_counter, returned_size[0], returned_size[1],
+        excel_writer(base,toomanycounter, anothercounter, image_counter, returned_size[0], returned_size[1],
                      returned_size[2], returned_color[0], returned_color[1], returned_color[2]) #outputs excel sheet
         anothercounter = anothercounter + 1
         if anothercounter > 12:
             anothercounter = 1
             toomanycounter = toomanycounter + 1
         color_counter = returned_color[3]
+        total_size_array = total_size_array + returned_size[0]
+        total_size_avg_array = total_size_avg_array + returned_size[1]
+        total_size_std_array = total_size_std_array + returned_size[2]
+        total_color_array = total_color_array + returned_color[0]
+        total_color_avg_array = total_color_avg_array + returned_color[1]
+        total_color_std_array = total_color_std_array + returned_color[2]
 
     image_counter = image_counter + 1
 
 
+data = pd.read_excel('A_test.xlsx')
+data.head()
+x = data[["Avg_size","Avg_color"]]
+plt.scatter(x["Avg_size"],x["Avg_color"])
+plt.xlabel('Avg_size')
+plt.ylabel('Avg_color')
+plt.show()
+#https://www.analyticsvidhya.com/blog/2019/08/comprehensive-guide-k-means-clustering/
 """
 for i in range(0,96):
     cluster_array[i] = ([cluster_size_array[i] + cluster_color_std_array[i] + cluster_color_array[i] + cluster_size_std_array[i]])
