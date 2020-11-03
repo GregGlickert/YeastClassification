@@ -11,6 +11,9 @@ from imutils import paths
 import argparse
 import sys
 from sklearn.cluster import KMeans
+from sklearn.preprocessing import normalize
+import scipy.cluster.hierarchy as shc
+from sklearn.cluster import AgglomerativeClustering
 import statistics
 
 total_size_array = []
@@ -78,6 +81,11 @@ for i in range(len(imagePath)):
     def cluster_maker():
         dire = os.getcwd()
         path = dire + '/Classifyer_dump'
+        path1 = dire +'/Cluster'
+        try:
+            os.makedirs(path1)
+        except OSError:
+            pass
         counter = 0
         counter1 = 0  # normally 0
         im = Image.open(os.path.join(path, "Cropped_full_yeast.png"))  # was "Cropped_full_yeast.png"
@@ -101,7 +109,7 @@ for i in range(len(imagePath)):
             for w in range(0, 12):
                 Wim = Each_Image.crop(
                     (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX) - 1))
-                Wim.save(os.path.join(path, "Yeast_Cluster." + str(counter1) + ".png"))
+                Wim.save(os.path.join(path1, "Yeast_Cluster." + str(counter1) + ".png"))
                 counter1 += 1
                 widthCounter1 = widthCounter1 + Each_Image_sizeX
                 widthCounter2 = widthCounter2 + Each_Image_sizeX
@@ -112,7 +120,7 @@ for i in range(len(imagePath)):
 
         for i in range(0, 96):
             print("Cropping Cluster %d" % i)
-            im = Image.open(os.path.join(path, "Yeast_Cluster.%d.png" % i))
+            im = Image.open(os.path.join(path1, "Yeast_Cluster.%d.png" % i))
             sizeX, sizeY = im.size
             im_sizeX = round(sizeX / 2)
             im_sizeY = round(sizeY / 2)
@@ -457,15 +465,60 @@ for i in range(len(imagePath)):
 
     image_counter = image_counter + 1
 
-
+beep = lambda x: os.system("echo -n '\a';sleep 0.2;" * x)
+beep(5)
+"""
 data = pd.read_excel('A_test.xlsx')
-data.head()
+X = data.iloc[:,[8,9]].values
+kmeans = KMeans(n_clusters=3, random_state=0).fit(X)
+
+#kmeans stuff
+imdir = '/Users/gregglickert/Documents/GitHub/YeastClassification/Cluster'
+targetdir = "/Users/gregglickert/Documents/GitHub/YeastClassification/cluster_test"
+
+filelist = glob.glob(os.path.join(imdir, '*.png'))
+filelist.sort()
+
+try:
+    os.makedirs(targetdir)
+except OSError:
+    pass
+# Copy with cluster name
+print("\n")
+for i, m in enumerate(kmeans.labels_): #changed from kmeans to dbscan
+    print("    Copy: %s / %s" %(i, len(kmeans.labels_)), end="\r") #same here
+    shutil.move(filelist[i], '/Users/gregglickert/Documents/GitHub/YeastClassification/cluster_test')
+"""
+#His clustering
+"""
+plt.figure(figsize=(10, 7))
+plt.title("Dendrograms")
+#dend = shc.dendrogram(shc.linkage(X, method='ward'))
+model = AgglomerativeClustering(n_clusters=3, affinity='euclidean', linkage='ward')
+model.fit(X)
+labels = model.labels_
+plt.scatter(X[labels==0, 0], X[labels==0, 1], s=50, marker='o', color='red')
+plt.scatter(X[labels==1, 0], X[labels==1, 1], s=50, marker='o', color='blue')
+plt.scatter(X[labels==2, 0], X[labels==2, 1], s=50, marker='o', color='green')
+plt.scatter(X[labels==3, 0], X[labels==3, 1], s=50, marker='o', color='purple')
+plt.scatter(X[labels==4, 0], X[labels==4, 1], s=50, marker='o', color='orange')
+plt.show()
+"""
+
+
+
+
+
+
+"""
 x = data[["Avg_size","Avg_color"]]
 plt.scatter(x["Avg_size"],x["Avg_color"])
 plt.xlabel('Avg_size')
 plt.ylabel('Avg_color')
 plt.show()
+"""
 #https://www.analyticsvidhya.com/blog/2019/08/comprehensive-guide-k-means-clustering/
+
 """
 for i in range(0,96):
     cluster_array[i] = ([cluster_size_array[i] + cluster_color_std_array[i] + cluster_color_array[i] + cluster_size_std_array[i]])
