@@ -30,7 +30,7 @@ ap.add_argument("-i", "--images", required=False,
                 help="path to input directory of images")
 args = vars(ap.parse_args())
 
-def initexecl():
+def initexecl(): #U platenumber - plate row A-H col number 1-12
     df = pd.DataFrame(
         {'Image processed':(),'Plate number': (), 'Yeast row': (), 'Yeast col': (), 'Q1_size': (), 'Q2_size': (), 'Q3_size': (),
          'Q4_size': (),
@@ -81,11 +81,6 @@ for i in range(len(imagePath)):
     def cluster_maker():
         dire = os.getcwd()
         path = dire + '/Classifyer_dump'
-        path1 = dire +'/Cluster'
-        try:
-            os.makedirs(path1)
-        except OSError:
-            pass
         counter = 0
         counter1 = 0  # normally 0
         im = Image.open(os.path.join(path, "Cropped_full_yeast.png"))  # was "Cropped_full_yeast.png"
@@ -109,7 +104,7 @@ for i in range(len(imagePath)):
             for w in range(0, 12):
                 Wim = Each_Image.crop(
                     (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX) - 1))
-                Wim.save(os.path.join(path1, "Yeast_Cluster." + str(counter1) + ".png"))
+                Wim.save(os.path.join(path, "Yeast_Cluster." + str(counter1) + ".png"))
                 counter1 += 1
                 widthCounter1 = widthCounter1 + Each_Image_sizeX
                 widthCounter2 = widthCounter2 + Each_Image_sizeX
@@ -120,7 +115,7 @@ for i in range(len(imagePath)):
 
         for i in range(0, 96):
             print("Cropping Cluster %d" % i)
-            im = Image.open(os.path.join(path1, "Yeast_Cluster.%d.png" % i))
+            im = Image.open(os.path.join(path, "Yeast_Cluster.%d.png" % i))
             sizeX, sizeY = im.size
             im_sizeX = round(sizeX / 2)
             im_sizeY = round(sizeY / 2)
