@@ -9,6 +9,7 @@ from openpyxl import load_workbook
 import glob
 from imutils import paths
 import argparse
+import scipy.stats
 import sys
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import normalize
@@ -32,12 +33,12 @@ args = vars(ap.parse_args())
 
 def initexecl(): #U platenumber - plate row A-H col number 1-12
     df = pd.DataFrame(
-        {'Image processed':(),'Plate number': (), 'Yeast row': (), 'Yeast col': (), 'Q1_size': (), 'Q2_size': (), 'Q3_size': (),
-         'Q4_size': (),
-         'Avg_size': (), 'Size_stdev': (),
+        {'Image processed': (), 'Cluster': (), 'Q1_size': (), 'Q2_size': (), 'Q3_size': (),
+         'Q4_size': (),'Avg_size': (), 'Size_stdev': (), 'Q1_Zscore': (),'Q2_Zscore': (), 'Q3_Zscore': (),
+         'Q4_Zscore': (), 'Zscore_avg': (), '# of threshold': (), 'modifier': (), 'temp': (),'Hit': (),
          'Q1_colorfullness': (), 'Q2_colorfullness': (), 'Q3_colorfullness': (), 'Q4_colorfullness': (),
-         'Avg_color': (),
-         'Color_stdev': ()})
+         'Avg_color': (),'Color_stdev':(), 'Q1_color_Zscore' : (), 'Q2_color_Zscore': (), 'Q3_color_Zscore': (),
+         'Q4_color_Zscore': (),'color_Zscore_avg': ()})
     writer = pd.ExcelWriter("A_test.xlsx", engine='openpyxl')
     df.to_excel(writer,index=False, header=True, startcol=0)
     writer.save()
@@ -355,21 +356,39 @@ for i in range(len(imagePath)):
             print((len(stats)))
             for i in range((len(stats)), 5, 1):
                 cc_size_array.append(0)
-        print(cc_size_array)
 
         if (len(cc_size_array) >= 5):
             print("problem on cell %d" % counter)
             exit(-1)
 
         # total_size_array = total_size_array + cc_size_array
-
-        avg_size = (cc_size_array[0] + cc_size_array[1] + cc_size_array[2] + cc_size_array[3]) / 4
+        print("size data")
+        print(cc_size_array)
+        avg_size = np.average(cc_size_array)
         print(avg_size)
         std = np.std(np.array(cc_size_array))
         print(std)
+        Zscore_array = abs(scipy.stats.zscore(cc_size_array))
+        print(Zscore_array)
+        Z_avg = np.average(Zscore_array)
+        print(Z_avg)
+        mod = 1.5  # if avg zscore is less than .5 or 40% that is rewarded
+        if Z_avg >= .8: # completely random number lol
+            mod = 1
+        above_size_ther = 0
+        for i in range(0, len(cc_size_array)):
+            if cc_size_array[i] >= 3000:
+                above_size_ther += 1
+
+        temp = (above_size_ther-(mod * Z_avg))
+        print(temp)
 
 
-        return cc_size_array, avg_size, std
+        print("end of size data")
+
+
+
+        return cc_size_array, avg_size, std, Zscore_array, Z_avg, above_size_ther, mod, temp
 
 
     def image_colorfulness(image):
@@ -395,6 +414,8 @@ for i in range(len(imagePath)):
         # https://www.pyimagesearch.com/2017/06/05/computing-image-colorfulness-with-opencv-and-python/
         color_array = []
         for i in range(0, 4):
+            print("THIS IS COLOR COUNTER")
+            print(color_counter)
             image = cv2.imread(os.path.join(path, "SMALL_CELL.%d.png" % color_counter))
             C = image_colorfulness(image)
             # display the colorfulness score on the image
@@ -412,20 +433,36 @@ for i in range(len(imagePath)):
             for i in range((len(color_array)), 5, 1):
                 color_array.append(0)
 
-        print(color_array)
-        return color_array, avg_color, std_color, color_counter
+        Zscore_array = abs(scipy.stats.zscore(color_array))
+        print(Zscore_array)
+        Z_avg = np.average(Zscore_array)
+        print(Z_avg)
+        mod = 1.5  # if avg zscore is less than .5 or 40% that is rewarded
+        if Z_avg >= .8:  # completely random number lol
+            mod = 1
+
+        #print(color_array)
+        return color_array, avg_color, std_color, color_counter, Zscore_array, Z_avg
 
 
-    def excel_writer(base,toomanycounter, anothercounter, image_counter, cc_size_array, avg_size, std, color_array, avg_color,
-                     std_color):
+    def excel_writer(base,toomanycounter, anothercounter, image_counter, cc_size_array, avg_size, std,
+                     Zscore, Zscore_avg, above_thres, mod,temp, color_array, avg_color,
+                     std_color, Zscore_color, Zscore_color_avg ):
         char = chr(toomanycounter + 64)
+        plate_name = ("U%d-%c%d" % (image_counter, char, anothercounter))
+        print(plate_name)
         new_df = pd.DataFrame(
-            {'Image processed':(base),'Plate Number': (image_counter), 'Yeast row': (char), 'Yeast col': (anothercounter),
-             'Q1_size': (cc_size_array[0]), 'Q2_size': (cc_size_array[1]),
-             'Q3_size': (cc_size_array[2]), 'Q4_size': (cc_size_array[3]), 'Avg_size': (avg_size), 'Size_stdev': (std),
+            {'Image processed':(base),'Cluster' :(plate_name),
+             'Q1_size': (cc_size_array[0]), 'Q2_size': (cc_size_array[1]),'Q3_size': (cc_size_array[2]),
+             'Q4_size': (cc_size_array[3]),'Avg_size': (avg_size), 'Size_stdev': (std),
+             'Q1_Zscore': (Zscore[0]), 'Q2_Zscore': (Zscore[1]), 'Q3_Zscore': (Zscore[2]),
+             'Q4_Zscore': (Zscore[3]),'Avg_Zscore': (Zscore_avg), '# above threshold': (above_thres),
+             'modifier': (mod), 'temp': (temp), 'hit':(temp),
              'Q1_color': (color_array[0]), 'Q2_color': (color_array[1])
                 , 'Q3_color': (color_array[2]), 'Q4_color': (color_array[3]), 'Avg_color': (avg_color),
-             'Color_stdev': (std_color)}, index=[0])
+             'Color_stdev': (std_color), 'Q1_color_Zscore' : (Zscore_color[0]), 'Q2_color_Zscore': (Zscore_color[1]),
+             'Q3_color_Zscore': (Zscore_color[2]),'Q4_color_Zscore': (Zscore_color[3]),
+             'color_Zscore_avg': (Zscore_color_avg)}, index=[0])
         writer = pd.ExcelWriter('A_test.xlsx', engine='openpyxl')
         writer.book = load_workbook('A_test.xlsx')
         writer.sheets = dict((ws.title, ws) for ws in writer.book.worksheets)
@@ -441,32 +478,52 @@ for i in range(len(imagePath)):
     cluster_maker()
     for c in range(0, 96):
         returned_size = connected_comps(c) #inputs is counter for which cluster to process and output is an array with size, avg size, and std
-        print(returned_size)
+        #print(returned_size)
         returned_color = colorful_writer(color_counter) #input is color_counter so knows which cell to process output is an array with colorfulness, avg color, and std
-        print((returned_color))
+        #print((returned_color))
         excel_writer(base,toomanycounter, anothercounter, image_counter, returned_size[0], returned_size[1],
-                     returned_size[2], returned_color[0], returned_color[1], returned_color[2]) #outputs excel sheet
+                     returned_size[2], returned_size[3], returned_size[4],returned_size[5],returned_size[6],
+                     returned_size[7],
+                     returned_color[0], returned_color[1], returned_color[2], returned_color[4],returned_color[5]) #outputs excel sheet
         anothercounter = anothercounter + 1
         if anothercounter > 12:
             anothercounter = 1
             toomanycounter = toomanycounter + 1
         color_counter = returned_color[3]
-        total_size_array = total_size_array + returned_size[0]
-        total_size_avg_array = total_size_avg_array + returned_size[1]
-        total_size_std_array = total_size_std_array + returned_size[2]
-        total_color_array = total_color_array + returned_color[0]
-        total_color_avg_array = total_color_avg_array + returned_color[1]
-        total_color_std_array = total_color_std_array + returned_color[2]
-
     image_counter = image_counter + 1
 
-beep = lambda x: os.system("echo -n '\a';sleep 0.2;" * x)
-beep(5)
-"""
-data = pd.read_excel('A_test.xlsx')
-X = data.iloc[:,[8,9]].values
-kmeans = KMeans(n_clusters=3, random_state=0).fit(X)
+#beep = lambda x: os.system("echo -n '\a';sleep 0.2;" * x)
+#beep(5)
 
+data = pd.read_excel('A_test.xlsx')
+X = abs(data.iloc[:,[15]].values)
+print(X)
+X_max = max(X)
+print(X_max)
+normalize_array = []
+for i in range(0, 96):
+    x = (X[i]/X_max) * 100
+    if x > 80:
+        x = 1
+    else:
+        x = 0
+    X[i] = x
+
+print(X)
+
+
+for i in range(0, (image_counter*96)):
+    new_df = pd.DataFrame(
+                {'Hit': (X[i])})
+    writer = pd.ExcelWriter('A_test.xlsx', engine='openpyxl')
+    writer.book = load_workbook('A_test.xlsx')
+    writer.sheets = dict((ws.title, ws) for ws in writer.book.worksheets)
+    reader = pd.read_excel(r'A_test.xlsx')
+    new_df.to_excel(writer, index=False, header=False, startcol=16, startrow=(i+1))
+    writer.close()
+
+
+"""
 #kmeans stuff
 imdir = '/Users/gregglickert/Documents/GitHub/YeastClassification/Cluster'
 targetdir = "/Users/gregglickert/Documents/GitHub/YeastClassification/cluster_test"
