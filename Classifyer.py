@@ -23,7 +23,7 @@ total_size_std_array = []
 total_color_array = []
 total_color_avg_array = []
 total_color_std_array = []
-image_counter = 1
+image_counter = 0
 
 
 ap = argparse.ArgumentParser()
@@ -483,6 +483,7 @@ for i in range(len(imagePath)):
     color_counter = 0
     initcrop(img)
     cluster_maker()
+    image_counter = image_counter + 1
     for c in range(0, 96):
         returned_size = connected_comps(c) #inputs is counter for which cluster to process and output is an array with size, avg size, and std
         #print(returned_size)
@@ -556,7 +557,6 @@ for i in range(0, (image_counter*96)):
     new_df.to_excel(writer, index=False, header=False, startcol=30, startrow=(i+1))
     writer.close()
 
-image_counter = image_counter + 1
 """
 #kmeans stuff
 imdir = '/Users/gregglickert/Documents/GitHub/YeastClassification/Cluster'
