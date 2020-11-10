@@ -38,7 +38,7 @@ def initexecl(): #U platenumber - plate row A-H col number 1-12
          'Q4_Zscore': (), 'Zscore_avg': (), '# of threshold': (), 'modifier': (), 'temp': (),'Hit': (),
          'Q1_colorfullness': (), 'Q2_colorfullness': (), 'Q3_colorfullness': (), 'Q4_colorfullness': (),
          'Avg_color': (),'Color_stdev':(), 'Q1_color_Zscore' : (), 'Q2_color_Zscore': (), 'Q3_color_Zscore': (),
-         'Q4_color_Zscore': (),'color_Zscore_avg': ()})
+         'Q4_color_Zscore': (),'color_Zscore_avg': (), '# of threshold': (), 'color_modifier': (), 'color_temp': (),'colorhit': ()})
     writer = pd.ExcelWriter("A_test.xlsx", engine='openpyxl')
     df.to_excel(writer,index=False, header=True, startcol=0)
     writer.save()
@@ -380,7 +380,7 @@ for i in range(len(imagePath)):
             if cc_size_array[i] >= 3000:
                 above_size_ther += 1
 
-        temp = (above_size_ther-(mod * Z_avg))
+        temp = (above_size_ther-(mod * Z_avg))  # simply alg to tell is positive gets normalized later
         print(temp)
 
 
@@ -440,14 +440,20 @@ for i in range(len(imagePath)):
         mod = 1.5  # if avg zscore is less than .5 or 40% that is rewarded
         if Z_avg >= .8:  # completely random number lol
             mod = 1
+        above_size_ther = 0
+        for i in range(0, len(color_array)):
+            if color_array[i] >= 23: #pretty red ones
+                above_size_ther += 1
+        temp = (above_size_ther - (mod * Z_avg))
+
 
         #print(color_array)
-        return color_array, avg_color, std_color, color_counter, Zscore_array, Z_avg
+        return color_array, avg_color, std_color, color_counter, Zscore_array, Z_avg, above_size_ther, mod, temp
 
 
     def excel_writer(base,toomanycounter, anothercounter, image_counter, cc_size_array, avg_size, std,
                      Zscore, Zscore_avg, above_thres, mod,temp, color_array, avg_color,
-                     std_color, Zscore_color, Zscore_color_avg ):
+                     std_color, Zscore_color, Zscore_color_avg, above_C_thres, mod_C, temp_C):
         char = chr(toomanycounter + 64)
         plate_name = ("U%d-%c%d" % (image_counter, char, anothercounter))
         print(plate_name)
@@ -462,7 +468,8 @@ for i in range(len(imagePath)):
                 , 'Q3_color': (color_array[2]), 'Q4_color': (color_array[3]), 'Avg_color': (avg_color),
              'Color_stdev': (std_color), 'Q1_color_Zscore' : (Zscore_color[0]), 'Q2_color_Zscore': (Zscore_color[1]),
              'Q3_color_Zscore': (Zscore_color[2]),'Q4_color_Zscore': (Zscore_color[3]),
-             'color_Zscore_avg': (Zscore_color_avg)}, index=[0])
+             'color_Zscore_avg': (Zscore_color_avg), '# of threshold': (above_C_thres), 'modifier': (mod_C),
+             'color_temp': (temp_C),'colorhit': (temp_C)}, index=[0])
         writer = pd.ExcelWriter('A_test.xlsx', engine='openpyxl')
         writer.book = load_workbook('A_test.xlsx')
         writer.sheets = dict((ws.title, ws) for ws in writer.book.worksheets)
@@ -484,18 +491,18 @@ for i in range(len(imagePath)):
         excel_writer(base,toomanycounter, anothercounter, image_counter, returned_size[0], returned_size[1],
                      returned_size[2], returned_size[3], returned_size[4],returned_size[5],returned_size[6],
                      returned_size[7],
-                     returned_color[0], returned_color[1], returned_color[2], returned_color[4],returned_color[5]) #outputs excel sheet
+                     returned_color[0], returned_color[1], returned_color[2], returned_color[4],returned_color[5],
+                     returned_color[6], returned_color[7], returned_color[8])  #outputs excel sheet
         anothercounter = anothercounter + 1
         if anothercounter > 12:
             anothercounter = 1
             toomanycounter = toomanycounter + 1
         color_counter = returned_color[3]
-    image_counter = image_counter + 1
 
 #beep = lambda x: os.system("echo -n '\a';sleep 0.2;" * x)
 #beep(5)
 
-data = pd.read_excel('A_test.xlsx')
+data = pd.read_excel('A_test.xlsx')  # takes in temp and normalizes and top 80% of the best values based on more normal
 X = abs(data.iloc[:,[15]].values)
 print(X)
 X_max = max(X)
@@ -522,7 +529,34 @@ for i in range(0, (image_counter*96)):
     new_df.to_excel(writer, index=False, header=False, startcol=16, startrow=(i+1))
     writer.close()
 
+data = pd.read_excel('A_test.xlsx')  # takes in temp and normalizes and top 80% of the best values based on more normal
+X = abs(data.iloc[:,[29]].values)
+print(X)
+X_max = max(X)
+print(X_max)
+normalize_array = []
+for i in range(0, 96):
+    x = (X[i]/X_max) * 100
+    if x > 80:
+        x = 1
+    else:
+        x = 0
+    X[i] = x
 
+print(X)
+
+
+for i in range(0, (image_counter*96)):
+    new_df = pd.DataFrame(
+                {'Hit': (X[i])})
+    writer = pd.ExcelWriter('A_test.xlsx', engine='openpyxl')
+    writer.book = load_workbook('A_test.xlsx')
+    writer.sheets = dict((ws.title, ws) for ws in writer.book.worksheets)
+    reader = pd.read_excel(r'A_test.xlsx')
+    new_df.to_excel(writer, index=False, header=False, startcol=30, startrow=(i+1))
+    writer.close()
+
+image_counter = image_counter + 1
 """
 #kmeans stuff
 imdir = '/Users/gregglickert/Documents/GitHub/YeastClassification/Cluster'
