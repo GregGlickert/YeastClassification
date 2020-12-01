@@ -483,8 +483,7 @@ for i in range(len(imagePath)):
         print("liz")
         image_counter = image_counter + 1
         for c in range(0, 96):
-            with concurrent.futures.ProcessPoolExecutor() as executor:
-                returned_size = executor.map(connected_comps_for_liz(c)) #inputs is counter for which cluster to process and output is an array with size, avg size, and std
+                returned_size = connected_comps_for_liz(c) #inputs is counter for which cluster to process and output is an array with size, avg size, and std
             #print(returned_size)
             returned_color = colorful_writer(color_counter) #input is color_counter so knows which cell to process output is an array with colorfulness, avg color, and std
             #print((returned_color))
