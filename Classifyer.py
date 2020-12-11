@@ -228,9 +228,9 @@ for i in range(len(imagePath)):
         stats = output[2]  # for size
         centroids = output[3]  # for location
 
-        print("Currently on cell %d" % counter)
+        #print("Currently on cell %d" % counter)
         cc_size_array = []
-        print(centroids)
+        #print(centroids)
         for i in range(0, (len(stats)), 1):
             if (centroids[i][0] >= 40 and centroids[i][0] <= 110 and centroids[i][1] >= 40 and centroids[i][1] <= 110):
                 print("%d is in 1" % i)
@@ -260,16 +260,16 @@ for i in range(len(imagePath)):
             exit(-1)
 
         # total_size_array = total_size_array + cc_size_array
-        print("size data")
-        print(cc_size_array)
+        #print("size data")
+        #print(cc_size_array)
         avg_size = np.average(cc_size_array)
-        print(avg_size)
+        #print(avg_size)
         std = np.std(np.array(cc_size_array))
-        print(std)
+        #print(std)
         Zscore_array = abs(scipy.stats.zscore(cc_size_array))
-        print(Zscore_array)
+        #print(Zscore_array)
         Z_avg = np.average(Zscore_array)
-        print(Z_avg)
+        #print(Z_avg)
         mod = 1.5  # if avg zscore is less than .5 or 40% that is rewarded
         if Z_avg >= .8: # completely random number lol
             mod = 1
@@ -279,10 +279,10 @@ for i in range(len(imagePath)):
                 above_size_ther += 1
 
         temp = ((10*above_size_ther)-(mod * Z_avg))  # simply alg to tell is positive gets normalized later
-        print(temp)
+        #print(temp)
 
 
-        print("end of size data")
+        #print("end of size data")
 
 
 
@@ -308,9 +308,9 @@ for i in range(len(imagePath)):
         stats = output[2]  # for size
         centroids = output[3]  # for location
 
-        print("Currently on cell %d" % counter)
+        #print("Currently on cell %d" % counter)
         cc_size_array = []
-        print(centroids)
+        #print(centroids)
         for i in range(0, (len(stats)), 1):
             if (centroids[i][0] >= 40 and centroids[i][0] <= 110 and centroids[i][1] >= 40 and centroids[i][1] <= 110):
                 print("%d is in 1" % i)
@@ -340,16 +340,16 @@ for i in range(len(imagePath)):
             exit(-1)
 
         # total_size_array = total_size_array + cc_size_array
-        print("size data")
-        print(cc_size_array)
+        #print("size data")
+        #print(cc_size_array)
         avg_size = np.average(cc_size_array)
-        print(avg_size)
+        #print(avg_size)
         std = np.std(np.array(cc_size_array))
-        print(std)
+        #print(std)
         Zscore_array = abs(scipy.stats.zscore(cc_size_array))
-        print(Zscore_array)
+        #print(Zscore_array)
         Z_avg = np.average(Zscore_array)
-        print(Z_avg)
+        #print(Z_avg)
         mod = 1.5  # if avg zscore is less than .5 or 40% that is rewarded
         if Z_avg >= .8:  # completely random number lol
             mod = 1
@@ -359,9 +359,9 @@ for i in range(len(imagePath)):
                 above_size_ther += 1
 
         temp = ((10 * above_size_ther) - (mod * Z_avg))  # simply alg to tell is positive gets normalized later
-        print(temp)
+        #print(temp)
 
-        print("end of size data")
+        #print("end of size data")
 
         return cc_size_array, avg_size, std, Zscore_array, Z_avg, above_size_ther, mod, temp
 
@@ -389,8 +389,8 @@ for i in range(len(imagePath)):
         # https://www.pyimagesearch.com/2017/06/05/computing-image-colorfulness-with-opencv-and-python/
         color_array = []
         for i in range(0, 4):
-            print("THIS IS COLOR COUNTER")
-            print(color_counter)
+            #print("THIS IS COLOR COUNTER")
+            #print(color_counter)
             image = cv2.imread(os.path.join(path, "SMALL_CELL.%d.png" % color_counter))
             C = image_colorfulness(image)
             # display the colorfulness score on the image
@@ -409,9 +409,9 @@ for i in range(len(imagePath)):
                 color_array.append(0)
 
         Zscore_array = abs(scipy.stats.zscore(color_array))
-        print(Zscore_array)
+        #print(Zscore_array)
         Z_avg = np.average(Zscore_array)
-        print(Z_avg)
+        #print(Z_avg)
         mod = 1.5  # if avg zscore is less than .5 or 40% that is rewarded
         if Z_avg >= .8:  # completely random number lol
             mod = 1
@@ -483,7 +483,7 @@ for i in range(len(imagePath)):
         print("liz")
         image_counter = image_counter + 1
         for c in range(0, 96):
-                returned_size = connected_comps_for_liz(c) #inputs is counter for which cluster to process and output is an array with size, avg size, and std
+            returned_size = connected_comps_for_liz(c) #inputs is counter for which cluster to process and output is an array with size, avg size, and std
             #print(returned_size)
             returned_color = colorful_writer(color_counter) #input is color_counter so knows which cell to process output is an array with colorfulness, avg color, and std
             #print((returned_color))
@@ -559,16 +559,6 @@ for i in range(0, (image_counter*96)):
     else:
         x = 0
     normalize_array.append(x)
-    new_df = pd.DataFrame(
-        {'Hit': (normalize_array[i])}, index=[0])
-    writer = pd.ExcelWriter('A_test.xlsx', engine='openpyxl')
-    writer.book = load_workbook('A_test.xlsx')
-    writer.sheets = dict((ws.title, ws) for ws in writer.book.worksheets)
-    reader = pd.read_excel(r'A_test.xlsx')
-    new_df.to_excel(writer, index=False, header=False, startcol=16, startrow=(i + 1))
-    writer.close()
-
-
 
     X = temp_color
     X_max = max(X)
@@ -579,26 +569,25 @@ for i in range(0, (image_counter*96)):
     else:
         x = 0
     normalize_array_color.append(x)
-    new_df = pd.DataFrame(
-                    {'colorhit': (normalize_array_color[i])}, index=[0])
-    writer = pd.ExcelWriter('A_test.xlsx', engine='openpyxl')
-    writer.book = load_workbook('A_test.xlsx')
-    writer.sheets = dict((ws.title, ws) for ws in writer.book.worksheets)
-    reader = pd.read_excel(r'A_test.xlsx')
-    new_df.to_excel(writer, index=False, header=False, startcol=30, startrow=(i+1))
-    writer.close()
 
     if normalize_array[i] == 1 and normalize_array_color[i] == 1:
         pos_array.append(1)
     else:
         pos_array.append(0)
+
     new_df = pd.DataFrame(
+                {'Hit': (normalize_array[i])}, index=[0])
+    new_df2 = pd.DataFrame(
+                {'colorhit': (normalize_array_color[i])}, index=[0])
+    new_df3 = pd.DataFrame(
                 {'POSITIVE': (pos_array[i])}, index=[0])
     writer = pd.ExcelWriter('A_test.xlsx', engine='openpyxl')
     writer.book = load_workbook('A_test.xlsx')
     writer.sheets = dict((ws.title, ws) for ws in writer.book.worksheets)
     reader = pd.read_excel(r'A_test.xlsx')
-    new_df.to_excel(writer, index=False, header=False, startcol=31, startrow=(i+1))
+    new_df.to_excel(writer, sheet_name='Sheet1', index=False, header=False, startcol=16, startrow=(i + 1))
+    new_df2.to_excel(writer, index=False, header=False, startcol=30, startrow=(i + 1))
+    new_df3.to_excel(writer, index=False, header=False, startcol=31, startrow=(i + 1))
     writer.close()
 #print(pos_array)
 
