@@ -18,6 +18,7 @@ import scipy.cluster.hierarchy as shc
 from sklearn.cluster import AgglomerativeClustering
 import statistics
 import concurrent.futures
+import easygui
 
 total_size_array = []
 total_size_avg_array = []
@@ -57,10 +58,7 @@ temp_color = []
 image_counter = 0
 
 
-ap = argparse.ArgumentParser()
-ap.add_argument("-i", "--images", required=False,
-                help="path to input directory of images")
-args = vars(ap.parse_args())
+
 
 def initexecl_liz(): #U platenumber - plate row A-H col number 1-12
     df = pd.DataFrame(
@@ -86,13 +84,15 @@ def initexecl_chris(): #U platenumber - plate row A-H col number 1-12
     writer.save()
 
 print("Size and color processing 1 Size processing 2")
-mode = input("press 1 or 2 than press enter: ")
-if int(mode) == 1:
+mode = easygui.indexbox(msg="What do you want to process\nNote can not process a single image folder must have two or more",
+                        title="Yeast Classifier",
+                 choices=("Size and color", "Size"))
+if int(mode) == 0:
     initexecl_liz()
-if int(mode) == 2:
+if int(mode) == 1:
     initexecl_chris()
-
-imagePath = sorted(list(paths.list_images(args["images"])))
+folder = easygui.diropenbox()
+imagePath = sorted(list(paths.list_images(folder)))
 for i in range(len(imagePath)):
     img = Image.open(imagePath[i])
     #img.show()
@@ -541,7 +541,7 @@ for i in range(len(imagePath)):
     plate_size = []
     initcrop(img)
     cluster_maker()
-    if int(mode) == 1:
+    if int(mode) == 0:
         print("liz")
         image_counter = image_counter + 1
         for c in range(0, 96):
@@ -596,10 +596,10 @@ for i in range(len(imagePath)):
             mod_color.append(returned_color[7])
             temp_color.append(returned_color[8])
 
-        if(image_counter > 2):
+        if(image_counter > 2): #changed for 2
             break
         #print(platename_arr)
-    if int(mode) == 2:
+    if int(mode) == 1:
         print("Chris")
         image_counter = image_counter + 1
         for c in range(0, 96):
@@ -615,7 +615,6 @@ for i in range(len(imagePath)):
                 anothercounter = 1
                 toomanycounter = toomanycounter + 1
             color_counter = returned_color[3]
-            # cc_size_array, avg_size, std, Zscore_array, Z_avg, above_size_ther, mod, temp
             cc = []
             cc = returned_size[0]
             # print(cc)
@@ -639,7 +638,7 @@ for i in range(len(imagePath)):
         if (image_counter > 2):
             break
 
-if int(mode) == 1:
+if int(mode) == 0:
     size_pos = size_hit(temp_array)
     color_pos = color_hit(temp_color)
     pos_size = pos_hit(size_pos, color_pos)
@@ -648,13 +647,14 @@ if int(mode) == 1:
                      above_size_ther, mod_size, temp_array, Q1_color, Q2_color, Q3_color, Q4_color,
                      total_color_avg_array, total_color_std_array, Z1_color, Z2_color, Z3_color,
                      Z4_color, above_size_ther_color, mod_color, temp_color, size_pos, color_pos, pos_size)
-if int(mode) == 2:
+if int(mode) == 1:
     pos_size = size_hit(temp_array)
     excel_writer_chris(base_arr, platename_arr, Q1_size, Q2_size, Q3_size, Q4_size,
                        total_size_avg_array, total_size_std_array, Z1_size, Z2_size, Z3_size, Z4_size, Z_avg,
                        above_size_ther, mod_size, temp_array, pos_size)
 
-print('\a')
+easygui.msgbox(msg="DONE!!!", title="Yeast Classifier")
+
 """
 #beep = lambda x: os.system("echo -n '\a';sleep 0.2;" * x)
 #beep(5)
