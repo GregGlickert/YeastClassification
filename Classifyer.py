@@ -1,3 +1,4 @@
+#!/usr/bin/env pythonpy
 from PIL import Image
 from plantcv import plantcv as pcv
 import cv2
@@ -26,6 +27,33 @@ total_color_avg_array = []
 total_color_std_array = []
 temp_array = []
 temp_color = []
+base_arr = []
+platename_arr = []
+Q1_size = []
+Q2_size = []
+Q3_size = []
+Q4_size = []
+Z1_size = []
+Z2_size = []
+Z3_size = []
+Z4_size = []
+Z_avg = []
+above_size_ther = []
+mod_size = []
+temp = []
+Q1_color = []
+Q2_color = []
+Q3_color = []
+Q4_color = []
+Z1_color = []
+Z2_color = []
+Z3_color = []
+Z4_color = []
+Z_avg_color = []
+above_size_ther_color = []
+mod_color = []
+temp_color = []
+
 image_counter = 0
 
 
@@ -38,10 +66,10 @@ def initexecl_liz(): #U platenumber - plate row A-H col number 1-12
     df = pd.DataFrame(
         {'Image processed': (), 'Cluster': (), 'Q1_size': (), 'Q2_size': (), 'Q3_size': (),
          'Q4_size': (),'Avg_size': (), 'Size_stdev': (), 'Q1_Zscore': (),'Q2_Zscore': (), 'Q3_Zscore': (),
-         'Q4_Zscore': (), 'Zscore_avg': (), '# of threshold': (), 'modifier': (), 'temp': (),'Hit': (),
+         'Q4_Zscore': (), 'Zscore_avg': (), 'above_sizethres': (), 'modifier': (), 'temp': (),'Hit': (),
          'Q1_colorfullness': (), 'Q2_colorfullness': (), 'Q3_colorfullness': (), 'Q4_colorfullness': (),
          'Avg_color': (),'Color_stdev':(), 'Q1_color_Zscore' : (), 'Q2_color_Zscore': (), 'Q3_color_Zscore': (),
-         'Q4_color_Zscore': (),'color_Zscore_avg': (), '# of threshold': (), 'color_modifier': (), 'color_temp': (),
+         'Q4_color_Zscore': (),'color_Zscore_avg': (), 'above color_thres': (), 'color_modifier': (), 'color_temp': (),
          'colorhit': (),'POSITIVE': ()})
     writer = pd.ExcelWriter("A_test.xlsx", engine='openpyxl')
     df.to_excel(writer,index=False, header=True, startcol=0)
@@ -57,13 +85,11 @@ def initexecl_chris(): #U platenumber - plate row A-H col number 1-12
     df.to_excel(writer,index=False, header=True, startcol=0)
     writer.save()
 
-print("Liz processing 1 Chris processing 2")
+print("Size and color processing 1 Size processing 2")
 mode = input("press 1 or 2 than press enter: ")
 if int(mode) == 1:
     initexecl_liz()
-    #print("test")
 if int(mode) == 2:
-    #print("testplz")
     initexecl_chris()
 
 imagePath = sorted(list(paths.list_images(args["images"])))
@@ -400,7 +426,7 @@ for i in range(len(imagePath)):
             color_counter = color_counter + 1
 
         # total_color_array = total_color_array + color_array
-        avg_color = (color_array[0] + color_array[1] + color_array[2] + color_array[3]) / 4
+        avg_color = np.average(color_array)
         std_color = np.std(np.array(color_array))
 
         if (len(color_array) < 4):
@@ -426,25 +452,63 @@ for i in range(len(imagePath)):
         return color_array, avg_color, std_color, color_counter, Zscore_array, Z_avg, above_size_ther, mod, temp
 
 
-    def excel_writer_liz(base,toomanycounter, anothercounter, image_counter, cc_size_array, avg_size, std,
-                     Zscore, Zscore_avg, above_thres, mod,temp, color_array, avg_color,
-                     std_color, Zscore_color, Zscore_color_avg, above_C_thres, mod_C, temp_C):
-        char = chr(toomanycounter + 64)
-        plate_name = ("U%d-%c%d" % (image_counter, char, anothercounter))
-        print(plate_name)
+    def size_hit(temp_array):
+        X = temp_array
+        X_max = max(X)
+        normalize_array = []
+        for i in range(0, (image_counter * 96)):
+            x = (X[i] / X_max) * 100
+            if x > 70:
+                x = 1
+            else:
+                x = 0
+            normalize_array.append(x)
+        return normalize_array
+
+
+    def color_hit(temp_color):
+        normalize_array_color = []
+        X = temp_color
+        X_max = max(X)
+        for i in range(0, (image_counter * 96)):
+            x = (X[i] / X_max) * 100
+            if x > 70:
+                x = 1
+            else:
+                x = 0
+            normalize_array_color.append(x)
+        return normalize_array_color
+
+
+    def pos_hit(normalize_array, normalize_array_color):
+        pos_array = []
+        for i in range(0, (image_counter * 96)):
+            if normalize_array[i] == 1 and normalize_array_color[i] == 1:
+                pos_array.append(1)
+            else:
+                pos_array.append(0)
+        return pos_array
+
+
+    def excel_writer_liz(base_arr, platename_arr, Q1_size, Q2_size, Q3_size, Q4_size,
+                         total_size_avg_array, total_size_std_array, Z1_size, Z2_size, Z3_size, Z4_size, Z_avg,
+                         above_size_ther, mod_size, temp_array, Q1_color, Q2_color, Q3_color, Q4_color,
+                         total_color_avg_array, total_color_std_array, Z1_color, Z2_color, Z3_color,
+                         Z4_color, above_size_ther_color, mod_color, temp_color, size_pos, color_pos, pos_size):
         new_df = pd.DataFrame(
-            {'Image processed':(base),'Cluster' :(plate_name),
-             'Q1_size': (cc_size_array[0]), 'Q2_size': (cc_size_array[1]),'Q3_size': (cc_size_array[2]),
-             'Q4_size': (cc_size_array[3]),'Avg_size': (avg_size), 'Size_stdev': (std),
-             'Q1_Zscore': (Zscore[0]), 'Q2_Zscore': (Zscore[1]), 'Q3_Zscore': (Zscore[2]),
-             'Q4_Zscore': (Zscore[3]),'Avg_Zscore': (Zscore_avg), '# above threshold': (above_thres),
-             'modifier': (mod), 'temp': (temp), 'hit':(temp),
-             'Q1_color': (color_array[0]), 'Q2_color': (color_array[1])
-                , 'Q3_color': (color_array[2]), 'Q4_color': (color_array[3]), 'Avg_color': (avg_color),
-             'Color_stdev': (std_color), 'Q1_color_Zscore' : (Zscore_color[0]), 'Q2_color_Zscore': (Zscore_color[1]),
-             'Q3_color_Zscore': (Zscore_color[2]),'Q4_color_Zscore': (Zscore_color[3]),
-             'color_Zscore_avg': (Zscore_color_avg), '# of threshold': (above_C_thres), 'modifier': (mod_C),
-             'color_temp': (temp_C),'colorhit': (temp_C), 'POSITIVE': (temp_C)}, index=[0])
+            {'Image processed':(base_arr),'Cluster' :(platename_arr),
+             'Q1_size': (Q1_size), 'Q2_size': (Q2_size),'Q3_size': (Q3_size),
+             'Q4_size': (Q4_size),'Avg_size': (total_size_avg_array), 'Size_stdev': (total_size_std_array),
+             'Q1_Zscore': (Z1_size), 'Q2_Zscore': (Z2_size), 'Q3_Zscore': (Z3_size),
+             'Q4_Zscore': (Z4_size),'Avg_Zscore': (Z_avg), 'above_sizethres': (above_size_ther),
+             'modifier': (mod_size), 'temp': (temp_array), 'hit': (size_pos), 'Q1_color': (Q1_color), 'Q2_color': (Q2_color)
+                , 'Q3_color': (Q3_color), 'Q4_color': (Q4_color), 'Avg_color': (total_color_avg_array),
+             'Color_stdev': (total_color_std_array), 'Q1_color_Zscore' : (Z1_color), 'Q2_color_Zscore': (Z2_color),
+             'Q3_color_Zscore': (Z3_color),'Q4_color_Zscore': (Z4_color),
+             'color_Zscore_avg': (Z_avg_color), 'above color_thres': (above_size_ther_color), 'modifier_color': (mod_color),
+             'color_temp': (temp_color), 'colorhit': (color_pos), 'POSITIVE': (pos_size)})
+        #new_df = pd.DataFrame.from_dict(new_df1, orient='index') # this is weird fuck indent for some works but columns does not
+        #new_df.transpose()
         writer = pd.ExcelWriter('A_test.xlsx', engine='openpyxl')
         writer.book = load_workbook('A_test.xlsx')
         writer.sheets = dict((ws.title, ws) for ws in writer.book.worksheets)
@@ -453,18 +517,16 @@ for i in range(len(imagePath)):
         writer.close()
 
 
-    def excel_writer_chris(base, toomanycounter, anothercounter, image_counter, cc_size_array, avg_size, std,
-                         Zscore, Zscore_avg, above_thres, mod, temp):
-        char = chr(toomanycounter + 64)
-        plate_name = ("U%d-%c%d" % (image_counter, char, anothercounter))
-        print(plate_name)
+    def excel_writer_chris(base_arr, platename_arr, Q1_size, Q2_size, Q3_size, Q4_size,
+                         total_size_avg_array, total_size_std_array, Z1_size, Z2_size, Z3_size, Z4_size, Z_avg,
+                         above_size_ther, mod_size, temp_array, pos_size):
         new_df = pd.DataFrame(
-            {'Image processed': (base), 'Cluster': (plate_name),
-             'Q1_size': (cc_size_array[0]), 'Q2_size': (cc_size_array[1]), 'Q3_size': (cc_size_array[2]),
-             'Q4_size': (cc_size_array[3]), 'Avg_size': (avg_size), 'Size_stdev': (std),
-             'Q1_Zscore': (Zscore[0]), 'Q2_Zscore': (Zscore[1]), 'Q3_Zscore': (Zscore[2]),
-             'Q4_Zscore': (Zscore[3]), 'Avg_Zscore': (Zscore_avg), '# above threshold': (above_thres),
-             'modifier': (mod), 'temp': (temp),'POSITIVE': (temp)}, index=[0])
+            {'Image processed':(base_arr),'Cluster' :(platename_arr),
+             'Q1_size': (Q1_size), 'Q2_size': (Q2_size),'Q3_size': (Q3_size),
+             'Q4_size': (Q4_size),'Avg_size': (total_size_avg_array), 'Size_stdev': (total_size_std_array),
+             'Q1_Zscore': (Z1_size), 'Q2_Zscore': (Z2_size), 'Q3_Zscore': (Z3_size),
+             'Q4_Zscore': (Z4_size),'Avg_Zscore': (Z_avg), '# above threshold': (above_size_ther),
+             'modifier': (mod_size), 'temp': (temp_array), 'hit': (pos_size)})
         writer = pd.ExcelWriter('A_test.xlsx', engine='openpyxl')
         writer.book = load_workbook('A_test.xlsx')
         writer.sheets = dict((ws.title, ws) for ws in writer.book.worksheets)
@@ -483,72 +545,123 @@ for i in range(len(imagePath)):
         print("liz")
         image_counter = image_counter + 1
         for c in range(0, 96):
+            base_arr.append(base)
+            char = chr(toomanycounter + 64)
+            plate_name = ("U%d-%c%d" % (image_counter, char, anothercounter))
+            platename_arr.append(plate_name)
             returned_size = connected_comps_for_liz(c) #inputs is counter for which cluster to process and output is an array with size, avg size, and std
             #print(returned_size)
             returned_color = colorful_writer(color_counter) #input is color_counter so knows which cell to process output is an array with colorfulness, avg color, and std
-            #print((returned_color))
-            excel_writer_liz(base,toomanycounter, anothercounter, image_counter, returned_size[0], returned_size[1],
-                         returned_size[2], returned_size[3], returned_size[4],returned_size[5],returned_size[6],
-                         returned_size[7],
-                         returned_color[0], returned_color[1], returned_color[2], returned_color[4],returned_color[5],
-                         returned_color[6], returned_color[7], returned_color[8])  #outputs excel sheet
             anothercounter = anothercounter + 1
             if anothercounter > 12:
                 anothercounter = 1
                 toomanycounter = toomanycounter + 1
             color_counter = returned_color[3]
-            plate_size.extend(returned_size[0])
+            #cc_size_array, avg_size, std, Zscore_array, Z_avg, above_size_ther, mod, temp
+            cc = []
+            cc = returned_size[0]
+            #print(cc)
+            Q1_size.append(cc[0])
+            Q2_size.append(cc[1])
+            Q3_size.append(cc[2])
+            Q4_size.append(cc[3])
+            total_size_avg_array.append(returned_size[1])
+            total_size_std_array.append(returned_size[2])
+            Zscore_array = (returned_size[3])
+            Z1_size.append(Zscore_array[0])
+            Z2_size.append(Zscore_array[1])
+            Z3_size.append(Zscore_array[2])
+            Z4_size.append(Zscore_array[3])
+            Z_avg.append(returned_size[4])
+            above_size_ther.append(returned_size[5])
+            mod_size.append(returned_size[6])
             temp_array.append(returned_size[7])
+            plate_size.extend(returned_size[0])
+            color_array = []
+            color_array = (returned_color[0])
+            Q1_color.append(color_array[0])
+            Q2_color.append(color_array[1])
+            Q3_color.append(color_array[2])
+            Q4_color.append(color_array[3])
+            total_color_avg_array.append(returned_color[1])
+            total_color_std_array.append(returned_color[2])
+            Z_color = []
+            Z_color = returned_color[4]
+            Z1_color.append(Z_color[0])
+            Z2_color.append(Z_color[1])
+            Z3_color.append(Z_color[2])
+            Z4_color.append(Z_color[3])
+            Z_avg_color.append(returned_color[5])
+            above_size_ther_color.append(returned_color[6])
+            mod_color.append(returned_color[7])
             temp_color.append(returned_color[8])
+
+        if(image_counter > 2):
+            break
+        #print(platename_arr)
     if int(mode) == 2:
-        print("chris test")
+        print("Chris")
         image_counter = image_counter + 1
         for c in range(0, 96):
-            returned_size = connected_comps_for_Chris(c)
-            excel_writer_chris(base, toomanycounter, anothercounter, image_counter, returned_size[0], returned_size[1],
-                             returned_size[2], returned_size[3], returned_size[4], returned_size[5], returned_size[6],
-                             returned_size[7])
+            base_arr.append(base)
+            char = chr(toomanycounter + 64)
+            plate_name = ("U%d-%c%d" % (image_counter, char, anothercounter))
+            platename_arr.append(plate_name)
+            returned_size = connected_comps_for_Chris(c)  # inputs is counter for which cluster to process and output is an array with size, avg size, and std
+            # print(returned_size)
+            returned_color = colorful_writer(color_counter)  # input is color_counter so knows which cell to process output is an array with colorfulness, avg color, and std
             anothercounter = anothercounter + 1
             if anothercounter > 12:
                 anothercounter = 1
                 toomanycounter = toomanycounter + 1
-            plate_size.extend(returned_size[0])
+            color_counter = returned_color[3]
+            # cc_size_array, avg_size, std, Zscore_array, Z_avg, above_size_ther, mod, temp
+            cc = []
+            cc = returned_size[0]
+            # print(cc)
+            Q1_size.append(cc[0])
+            Q2_size.append(cc[1])
+            Q3_size.append(cc[2])
+            Q4_size.append(cc[3])
+            total_size_avg_array.append(returned_size[1])
+            total_size_std_array.append(returned_size[2])
+            Zscore_array = (returned_size[3])
+            Z1_size.append(Zscore_array[0])
+            Z2_size.append(Zscore_array[1])
+            Z3_size.append(Zscore_array[2])
+            Z4_size.append(Zscore_array[3])
+            Z_avg.append(returned_size[4])
+            above_size_ther.append(returned_size[5])
+            mod_size.append(returned_size[6])
             temp_array.append(returned_size[7])
-    dire = os.getcwd()
-    path = dire + '/Histograms'
-    try:
-        os.makedirs(path)
-    except OSError:
-        pass
-    #print("Array for plate size")
-    #print(plate_size)
-    plt.hist(plate_size, bins=10)
-    plt.xlabel('Size of Cell')
-    plt.ylabel('Amount in bin')
-    plt.title('Hist for Image %s' %base)
-    plt.savefig(os.path.join(path,"hist%d.png" %image_counter))
-    #plt.show()
-    plt.close()
-    total_size_array.extend(plate_size)
-#print(total_size_array)
-plt.hist(total_size_array,bins=10)
-plt.xlabel('Size of Cell')
-plt.ylabel('Amount in bin')
-plt.title('Hist for every plate')
-plt.savefig(os.path.join(path,"Hist_Every_plate.png"))
-#plt.show()
-plt.close()
+            plate_size.extend(returned_size[0])
+            temp_color.append(returned_color[8])
+        if (image_counter > 2):
+            break
 
+if int(mode) == 1:
+    size_pos = size_hit(temp_array)
+    color_pos = color_hit(temp_color)
+    pos_size = pos_hit(size_pos, color_pos)
+    excel_writer_liz(base_arr, platename_arr, Q1_size, Q2_size, Q3_size, Q4_size,
+                     total_size_avg_array, total_size_std_array, Z1_size, Z2_size, Z3_size, Z4_size, Z_avg,
+                     above_size_ther, mod_size, temp_array, Q1_color, Q2_color, Q3_color, Q4_color,
+                     total_color_avg_array, total_color_std_array, Z1_color, Z2_color, Z3_color,
+                     Z4_color, above_size_ther_color, mod_color, temp_color, size_pos, color_pos, pos_size)
+if int(mode) == 2:
+    pos_size = size_hit(temp_array)
+    excel_writer_chris(base_arr, platename_arr, Q1_size, Q2_size, Q3_size, Q4_size,
+                       total_size_avg_array, total_size_std_array, Z1_size, Z2_size, Z3_size, Z4_size, Z_avg,
+                       above_size_ther, mod_size, temp_array, pos_size)
 
-
-
-
+print('\a')
+"""
 #beep = lambda x: os.system("echo -n '\a';sleep 0.2;" * x)
 #beep(5)
 
 X = temp_array
 X_max = max(X)
-print(X_max)
+(X_max)
 normalize_array = []
 normalize_array_color = []
 pos_array = []
@@ -591,16 +704,14 @@ for i in range(0, (image_counter*96)):
     writer.close()
 #print(pos_array)
 
-
+"""
 
 """
 #kmeans stuff
 imdir = '/Users/gregglickert/Documents/GitHub/YeastClassification/Cluster'
 targetdir = "/Users/gregglickert/Documents/GitHub/YeastClassification/cluster_test"
-
 filelist = glob.glob(os.path.join(imdir, '*.png'))
 filelist.sort()
-
 try:
     os.makedirs(targetdir)
 except OSError:
@@ -647,17 +758,13 @@ for i in range(0,96):
 print("clustered is")
 print(cluster_array)
 print(len(cluster_array))
-
 imdir = '/Users/gregglickert/PycharmProjects/cc_test/CLUSTERD'
 targetdir = "/Users/gregglickert/PycharmProjects/cc_test/testing folder"
 number_clusters = 5
-
 # Loop over files and get features
 filelist = glob.glob(os.path.join(imdir, '*.png'))
 filelist.sort()
-
 kmeans = KMeans(n_clusters=number_clusters, random_state=0).fit(np.array(total_size_array))
-
 try:
     os.makedirs(targetdir)
 except OSError:
@@ -667,12 +774,10 @@ print("\n")
 for i, m in enumerate(kmeans.labels_): #changed from kmeans to dbscan
     print("    Copy: %s / %s" %(i, len(kmeans.labels_)), end="\r") #same here
     shutil.move(filelist[i], '/Users/gregglickert/PycharmProjects/cc_test/testing folder2')
-
 print(len(total_size_array))
 print(total_size_array)
 print(len(total_color_array))
 print(total_color_array)
-
 plt.hist(total_size_array)
 plt.show()
 """
