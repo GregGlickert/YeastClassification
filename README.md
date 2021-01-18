@@ -1,6 +1,6 @@
 # YeastClassification
-To run on command line\
-command - python Classifyer.py --images 'path for image folder here'
+Run script and GUI should open
+Output will be placed in image folder
 ## Requires python install
 ### Using Anaconda 
 Environment can be built from included yml\
@@ -24,4 +24,8 @@ Pandas // pip install pandas
 Openpyxl // pip install openpyxl
 
 Imutils // pip install imutils
+
+EasyGUI // pip install easygui
+
+TQDM // pip install tqdm
 
