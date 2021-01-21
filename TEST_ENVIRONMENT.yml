@@ -4,9 +4,10 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
+  - _anaconda_depends=2019.10=py37_0
   - _ipyw_jlab_nb_ext_conf=0.1.0=py37_0
   - alabaster=0.7.12=py37_0
-  - anaconda=2019.10=py37_0
+  - anaconda=custom=py37_1
   - anaconda-client=1.7.2=py37_0
   - anaconda-navigator=1.9.12=py37_0
   - anaconda-project=0.8.3=py_0
@@ -35,15 +36,14 @@ dependencies:
   - boto=2.49.0=py37_0
   - bottleneck=1.2.1=py37h1d22016_1
   - bzip2=1.0.8=h1de35cc_0
-  - ca-certificates=2019.8.28=0
-  - certifi=2019.9.11=py37_0
+  - ca-certificates=2020.10.14=0
+  - certifi=2020.6.20=pyhd3eb1b0_3
   - cffi=1.12.3=py37hb5b8e2f_0
   - chardet=3.0.4=py37_1003
   - click=7.0=py37_0
-  - cloudpickle=1.2.2=py_0
   - clyent=1.2.2=py37_1
   - colorama=0.4.1=py37_0
-  - conda=4.8.2=py37_0
+  - conda=4.9.1=py37hecd8cb5_0
   - conda-build=3.18.9=py37_3
   - conda-env=2.6.0=1
   - conda-package-handling=1.6.0=py37h1de35cc_0
@@ -59,7 +59,6 @@ dependencies:
   - dbus=1.13.6=h90a0687_0
   - decorator=4.4.0=py37_1
   - defusedxml=0.6.0=py_0
-  - distributed=2.5.2=py_0
   - docutils=0.15.2=py37_0
   - entrypoints=0.3=py37_0
   - et_xmlfile=1.0.1=py37_0
@@ -145,6 +144,9 @@ dependencies:
   - more-itertools=7.2.0=py37_0
   - mpc=1.1.0=h6ef4df4_1
   - mpfr=4.0.1=h3018a27_3
+  - mpi=1.0=mpich
+  - mpi4py=3.0.3=py37h77202c6_0
+  - mpich=3.3.2=hc856adb_0
   - mpmath=1.1.0=py37_0
   - msgpack-python=0.6.1=py37h04f5b5a_1
   - multipledispatch=0.6.0=py37_0
@@ -163,7 +165,7 @@ dependencies:
   - numpydoc=0.9.1=py_0
   - olefile=0.46=py37_0
   - openpyxl=3.0.0=py_0
-  - openssl=1.1.1d=h1de35cc_2
+  - openssl=1.1.1h=haf1e3a3_0
   - packaging=19.2=py_0
   - pandas=0.25.1=py37h0a44026_0
   - pandoc=2.2.3.2=0
@@ -201,7 +203,6 @@ dependencies:
   - pyqt=5.9.2=py37h655552a_2
   - pyrsistent=0.15.4=py37h1de35cc_0
   - pysocks=1.7.1=py37_0
-  - pytables=3.5.2=py37h5bccee9_1
   - pytest=5.2.1=py37_0
   - pytest-arraydiff=0.3=py37h39e3cac_0
   - pytest-astropy=0.5.0=py37_0
@@ -252,10 +253,8 @@ dependencies:
   - spyder-kernels=0.5.2=py37_0
   - sqlalchemy=1.3.9=py37h1de35cc_0
   - sqlite=3.30.0=ha441bb4_0
-  - statsmodels=0.10.1=py37h1d22016_0
   - sympy=1.4=py37_0
   - tbb=2019.8=h04f5b5a_0
-  - tblib=1.4.0=py_0
   - terminado=0.8.2=py37_0
   - testpath=0.4.2=py37_0
   - tk=8.6.8=ha441bb4_0
@@ -287,29 +286,63 @@ dependencies:
   - zstd=1.3.7=h5bba6e5_0
   - pip:
     - absl-py==0.9.0
+    - aiohttp==3.6.2
+    - allensdk==2.4.1
+    - argschema==1.17.5
     - astor==0.8.1
+    - async-timeout==3.0.1
+    - bmtk==0.0.8
     - cachetools==4.0.0
+    - cloudpickle==1.6.0
+    - dask-jobqueue==0.7.2
+    - descartes==1.1.0
+    - distributed==2020.12.0
+    - distro==1.5.0
+    - easygui==0.98.1
     - gast==0.2.2
+    - glymur==0.8.19
     - google-auth==1.11.2
     - google-auth-oauthlib==0.4.1
     - google-pasta==0.1.8
     - grpcio==1.27.2
+    - hdmf==2.3.0
+    - imutils==0.5.3
     - keras-applications==1.0.8
     - keras-preprocessing==1.1.0
     - markdown==3.2.1
+    - marshmallow==3.0.0rc6
+    - mizani==0.7.2
+    - multidict==4.7.6
+    - nest-asyncio==1.2.0
     - neuron==7.8.1.1
     - oauthlib==3.1.0
+    - opencv-python==3.4.13.47
     - opt-einsum==3.1.0
+    - palettable==3.3.0
     - pip==20.0.2
+    - plantcv==3.10.1
+    - plotnine==0.7.1
     - protobuf==3.11.3
+    - psycopg2-binary==2.8.6
     - pyasn1==0.4.8
     - pyasn1-modules==0.2.8
+    - pynrrd==0.4.2
+    - pynwb==1.4.0
     - requests-oauthlib==1.3.0
+    - requests-toolbelt==0.9.1
     - rsa==4.0
-    - scipy==1.4.1
+    - scikit-build==0.11.1
+    - scipy==1.6.0
+    - simpleitk==1.2.4
+    - simplejson==3.17.2
+    - statsmodels==0.12.1
+    - tables==3.5.1
+    - tblib==1.7.0
     - tensorboard==2.1.0
     - tensorflow==2.1.0
     - tensorflow-estimator==2.1.0
     - termcolor==1.1.0
+    - typing-extensions==3.7.4.3
+    - xarray==0.15.1
+    - yarl==1.6.3
 prefix: /opt/anaconda3
-
