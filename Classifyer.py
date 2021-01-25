@@ -77,18 +77,81 @@ for i in tqdm(range(len(imagePath))):
 
 # crops the image into just the plate
     #can improve to add edge detection
-    def initcrop(img):
-        # location of plate in every pic
-        left = 1875
-        top = 730
-        right = 5680
-        bottom = 3260
+    def initcrop(imagePath):
         dire = folder
         path = dire + '/Classifyer_dump'
         try:
             os.makedirs(path)
         except OSError:
             pass
+        image = cv2.imread(imagePath)
+        blue_image = pcv.rgb2gray_lab(image, 'l')
+        Gaussian_blue = cv2.adaptiveThreshold(blue_image, 255,
+                                              cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 981,
+                                              -1)  # 241 is good 981
+        cv2.imwrite(os.path.join(path, "blue_test.png"), Gaussian_blue)
+        fill = pcv.fill_holes(Gaussian_blue)
+        fill_again = pcv.fill(fill, 100000)
+
+        id_objects, obj_hierarchy = pcv.find_objects(img=image, mask=fill_again)  #lazy way to findContours and draw them
+
+        roi1, roi_hierarchy = pcv.roi.rectangle(img=image, x=3000, y=1000, h=200, w=300)
+
+        roi_objects, hierarchy3, kept_mask, obj_area = pcv.roi_objects(img=image, roi_contour=roi1,
+                                                                       roi_hierarchy=roi_hierarchy,
+                                                                       object_contour=id_objects,
+                                                                       obj_hierarchy=obj_hierarchy,
+                                                                       roi_type='partial')
+        cv2.imwrite(os.path.join(path, "plate_mask.png"), kept_mask)
+
+        mask = cv2.imread(os.path.join(path, "plate_mask.png"))
+        result = image * (mask.astype(image.dtype))
+        result = cv2.bitwise_not(result)
+        cv2.imwrite(os.path.join(path, "AutoCrop.png"), result)
+
+        gray_image = pcv.rgb2gray_lab(result, 'b')
+        plate_threshold = cv2.adaptiveThreshold(gray_image, 255,
+                                                cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 241,
+                                                -1)  # 241 is good 981
+        cv2.imwrite(os.path.join(path, "plate_threshold.png"), plate_threshold)
+
+        fill_again2 = pcv.fill(plate_threshold, 1000)
+
+        id_objects, obj_hierarchy = pcv.find_objects(img=image, mask=fill_again2)
+
+        roi1, roi_hierarchy = pcv.roi.rectangle(img=image, x=1950, y=800, h=75, w=75)
+
+        roi_objects, hierarchy3, kept_mask, obj_area = pcv.roi_objects(img=image, roi_contour=roi1,
+                                                                       roi_hierarchy=roi_hierarchy,
+                                                                       object_contour=id_objects,
+                                                                       obj_hierarchy=obj_hierarchy,
+                                                                       roi_type='partial')
+        cv2.imwrite(os.path.join(path, "test_mask.png"), kept_mask)
+        mask = cv2.imread(os.path.join(path, "test_mask.png"))
+        result = image * (mask.astype(image.dtype))
+        result = cv2.bitwise_not(result)
+        cv2.imwrite(os.path.join(path, "TEST.png"), result)
+
+        output = cv2.connectedComponentsWithStats(kept_mask, connectivity=8)
+
+        centroids = output[3]
+        centroids_x = (int(centroids[1][0]))
+        centroids_y = (int(centroids[1][1]))
+        #print(centroids_x)
+        #print(centroids_y)
+
+        #print(centroids)
+
+        left = (centroids_x - 70)
+        right = (centroids_x + 3750)
+        top = (centroids_y - 80)
+        bottom = (centroids_y + 2450)
+        #print(top)
+        #print(bottom)
+        image = Image.open(imagePath)
+        img_crop = image.crop((left, top, right, bottom))
+        img_crop.save(os.path.join(path, "CROPPED.png"))
+
         img_crop = img.crop((left, top, right, bottom))
         # img_crop.show()
         img_crop.save(os.path.join(path, 'Cropped_full_yeast.png'))
@@ -512,12 +575,13 @@ for i in tqdm(range(len(imagePath))):
     plate_size = []
     plate_color = []
 
-    initcrop(img)
+    initcrop(imagePath[i])
     cluster_maker()
     # 0 means size and color looking for small and red
     if int(mode) == 0:
         image_counter = image_counter + 1
         for c in range(0, 96):
+            #print(c)
             base_arr.append(base)
             char = chr(toomanycounter + 64)
             plate_name = ("U%d-%c%d" % (image_counter, char, anothercounter))
