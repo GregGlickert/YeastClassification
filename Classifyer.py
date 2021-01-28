@@ -21,7 +21,6 @@ import scipy.stats
 import easygui
 from tqdm import tqdm
 
-
 total_size_array = []
 total_size_avg_array = []
 total_size_std_array = []
@@ -59,24 +58,27 @@ temp_color = []
 
 image_counter = 0
 
-#GUI#
-mode = easygui.indexbox(msg="What do you want to process"
-                            "\nNote can not process a single image folder must have two or more images"
-                            "\nFolder also must ONLY contain images wanting to processed and nothing else at this time"
+# GUI#
+mode = easygui.indexbox(msg="Which mode would you like?"
+                            "\nIMPORTANT"
+                            "\nCan not process a single image folder MUST have two or more images at this time"
+                            "\nFolder also must ONLY contain images wanting to be processed and nothing else at this time"
                             "\nOutputs will be placed in folder selected",
                         title="Yeast Classifier",
-                 choices=("Size and color", "Size"))
+                        choices=("Size and color", "Size"))
 folder = easygui.diropenbox()
-#Loops over every image in the selected folder
+# Loops over every image in the selected folder
 imagePath = sorted(list(paths.list_images(folder)))
 for i in tqdm(range(len(imagePath))):
     img = Image.open(imagePath[i])
-    #img.show()
+    # img.show()
     base = os.path.basename(imagePath[i])
-    #print("PROCESSING IMAGE %s..." %base)
 
-# crops the image into just the plate
-    #can improve to add edge detection
+
+    # print("PROCESSING IMAGE %s..." %base)
+
+    # crops the image into just the plate
+    # can improve to add edge detection
     def initcrop(imagePath):
         dire = folder
         path = dire + '/Classifyer_dump'
@@ -93,7 +95,8 @@ for i in tqdm(range(len(imagePath))):
         fill = pcv.fill_holes(Gaussian_blue)
         fill_again = pcv.fill(fill, 100000)
 
-        id_objects, obj_hierarchy = pcv.find_objects(img=image, mask=fill_again)  #lazy way to findContours and draw them
+        id_objects, obj_hierarchy = pcv.find_objects(img=image,
+                                                     mask=fill_again)  # lazy way to findContours and draw them
 
         roi1, roi_hierarchy = pcv.roi.rectangle(img=image, x=3000, y=1000, h=200, w=300)
 
@@ -137,17 +140,17 @@ for i in tqdm(range(len(imagePath))):
         centroids = output[3]
         centroids_x = (int(centroids[1][0]))
         centroids_y = (int(centroids[1][1]))
-        #print(centroids_x)
-        #print(centroids_y)
+        # print(centroids_x)
+        # print(centroids_y)
 
-        #print(centroids)
+        # print(centroids)
 
         left = (centroids_x - 70)
         right = (centroids_x + 3750)
         top = (centroids_y - 80)
         bottom = (centroids_y + 2450)
-        #print(top)
-        #print(bottom)
+        # print(top)
+        # print(bottom)
         image = Image.open(imagePath)
         img_crop = image.crop((left, top, right, bottom))
         img_crop.save(os.path.join(path, "CROPPED.png"))
@@ -166,15 +169,17 @@ for i in tqdm(range(len(imagePath))):
         heavy_fill_blue = pcv.fill(blur_image, 400)  # value 400
         cv2.imwrite(os.path.join(path, "Cropped_Threshold.png"), heavy_fill_blue)
 
-# crops the plate into the clusters
+
+    # crops the plate into the clusters
     def cluster_maker():
         counter3 = 0
         counter1 = 0
-        dire = folder #used to be os.getcwd()
+        dire = folder  # used to be os.getcwd()
         path = dire + '/Classifyer_dump'
         path1 = dire + '/Yeast_cluster_inv'
         path2 = dire + '/Yeast_cluster'
         path3 = dire + '/Cells'
+        path4 = dire + '/Binary_cell'
         try:
             os.makedirs(path)
         except OSError:
@@ -189,6 +194,10 @@ for i in tqdm(range(len(imagePath))):
             pass
         try:
             os.makedirs(path3)
+        except OSError:
+            pass
+        try:
+            os.makedirs(path4)
         except OSError:
             pass
         counter = 0
@@ -217,7 +226,7 @@ for i in tqdm(range(len(imagePath))):
                 counter1 += 1
                 widthCounter1 = widthCounter1 + Each_Image_sizeX
                 widthCounter2 = widthCounter2 + Each_Image_sizeX
-                #print(counter1)
+                # print(counter1)
         im = Image.open(os.path.join(path, "Cropped_full_yeast.png"))  # was "Cropped_full_yeast.png"
         counter = 0
         anotherCounter = 0
@@ -275,14 +284,43 @@ for i in tqdm(range(len(imagePath))):
                     counter3 += 1
                     widthCounter1 = widthCounter1 + Each_Image_sizeX
                     widthCounter2 = widthCounter2 + Each_Image_sizeX
+        counter3 = 0
+        for i in range(0, 96):
+            im = Image.open(os.path.join(path1, "Yeast_Cluster.%d.png" % i))
+            sizeX, sizeY = im.size
+            im_sizeX = round(sizeX / 2)
+            im_sizeY = round(sizeY / 2)
+            for h in range(0, im.height, im_sizeY):
+                nim = im.crop((0, h, im.width - 1, min(im.height, h + im_sizeY) - 1))
+                nim.save(os.path.join(path, "ROW_SMALL." + str(row_counter_for_save) + ".png"))
+                row_counter_for_save += 1
+                if (h >= im_sizeY):
+                    break
+            for i in range(0, 2):
+                rowImage = (os.path.join(path, "ROW_SMALL.%d.png" % row_counter_for_open))
+                Each_Image = Image.open(rowImage)
+                sizeX2, sizeY2 = Each_Image.size
+                Each_Image_sizeX = round(sizeX2 / 2)
+                Each_Image_sizeY = round(sizeY2 / 2)
+                row_counter_for_open += 1
+                widthCounter1 = 0
+                widthCounter2 = Each_Image_sizeX
+                for w in range(0, 2):
+                    Wim = Each_Image.crop(
+                        (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX) - 1))
+                    Wim.save(os.path.join(path4, "SMALL_CELL." + str(counter3) + ".png"))
+                    counter3 += 1
+                    widthCounter1 = widthCounter1 + Each_Image_sizeX
+                    widthCounter2 = widthCounter2 + Each_Image_sizeX
 
-# runs CC and is looking for small cells returns stats
+
+    # runs CC and is looking for small cells returns stats
     def connected_comps_for_liz(counter):
-        dire = folder #used to be os.getcwd()
-        path = dire + '/Yeast_cluster_inv'
-        cropped_img = cv2.imread(os.path.join(path, 'Yeast_Cluster.%d.png' % counter),
+        dire = folder  # used to be os.getcwd()
+        path = dire + '/Binary_cell'
+        cropped_img = cv2.imread(os.path.join(path, 'SMALL_CELL.%d.png' % counter),
                                  cv2.IMREAD_UNCHANGED)  # changed from Yeast_Cluster.%d.png  %counter
-        circle_me = cv2.imread(os.path.join(path, "Yeast_Cluster.%d.png" % counter))
+        circle_me = cv2.imread(os.path.join(path, "SMALL_CELL.%d.png" % counter))
 
         connected_counter = 0
 
@@ -296,26 +334,31 @@ for i in tqdm(range(len(imagePath))):
         stats = output[2]  # for size
         centroids = output[3]  # for location
 
-        #print("Currently on cell %d" % counter)
+        # print("Currently on cell %d" % counter)
         cc_size_array = []
-        #print(centroids)
+        # print(centroids)
+        """
         for i in range(0, (len(stats)), 1):
-            if (centroids[i][0] >= 40 and centroids[i][0] <= 110 and centroids[i][1] >= 40 and centroids[i][1] <= 110):
-                #print("%d is in 1" % i)
+            if (centroids[i][0] >= 40 and centroids[i][0] <= 110 and centroids[i][1] >= 40 and centroids[i][1] <= 140):
+                print("%d is in 1" % i)
                 cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
+
         for i in range(0, (len(stats)), 1):
-            if (centroids[i][0] >= 200 and centroids[i][0] <= 270 and centroids[i][1] >= 40 and centroids[i][1] <= 110):
+            if (centroids[i][0] >= 200 and centroids[i][0] <= 270 and centroids[i][1] >= 40 and centroids[i][1] <= 140):
                 cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
-                #print("%d is in 2" % i)
+                print("%d is in 2" % i)
+
         for i in range(0, (len(stats)), 1):
             if (centroids[i][0] >= 40 and centroids[i][0] <= 110 and centroids[i][1] >= 200 and centroids[i][1] <= 270):
                 cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
-                #print("%d is in 3" % i)
+                print("%d is in 3" % i)
+
         for i in range(0, (len(stats)), 1):
             if (centroids[i][0] >= 200 and centroids[i][0] <= 270 and centroids[i][1] >= 200 and centroids[i][
                 1] <= 270):
                 cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
-                #print("%d is in 4" % i)
+                print("%d is in 4" % i)
+
 
         if (len(stats) < 4):
             #print("too few decteted on %d" % counter)
@@ -326,6 +369,7 @@ for i in tqdm(range(len(imagePath))):
         if (len(cc_size_array) >= 5):
             print("problem on cell %d" % counter)
             exit(-1)
+
 
         # total_size_array = total_size_array + cc_size_array
         #print("size data")
@@ -348,17 +392,19 @@ for i in tqdm(range(len(imagePath))):
 
         temp = ((10*above_size_ther)-(mod * Z_avg))  # simply alg to tell is positive gets normalized later
         #print(temp)
+"""
+
+        # print("end of size data")
+        # cc_size_array.append(stats[1, cv2.CC_STAT_AREA])
+        answer = 0
+        if len(stats) > 1:
+            answer = (stats[1, cv2.CC_STAT_AREA])
+        return answer
 
 
-        #print("end of size data")
-
-
-
-        return cc_size_array, avg_size, std, Zscore_array, Z_avg, above_size_ther, mod, temp
-
-# runs CC and is looking for big cells returns stats
+    # runs CC and is looking for big cells returns stats
     def connected_comps_for_Chris(counter):
-        dire = folder #used to be os.getcwd()
+        dire = folder  # used to be os.getcwd()
         path = dire + '/Yeast_cluster_inv'
         cropped_img = cv2.imread(os.path.join(path, 'Yeast_Cluster.%d.png' % counter),
                                  cv2.IMREAD_UNCHANGED)  # changed from Yeast_Cluster.%d.png  %counter
@@ -376,30 +422,30 @@ for i in tqdm(range(len(imagePath))):
         stats = output[2]  # for size
         centroids = output[3]  # for location
 
-        #print("Currently on cell %d" % counter)
+        # print("Currently on cell %d" % counter)
         cc_size_array = []
-        #print(centroids)
+        # print(centroids)
         for i in range(0, (len(stats)), 1):
-            if (centroids[i][0] >= 40 and centroids[i][0] <= 110 and centroids[i][1] >= 40 and centroids[i][1] <= 110):
-                #print("%d is in 1" % i)
+            if (centroids[i][0] >= 40 and centroids[i][0] <= 110 and centroids[i][1] >= 40 and centroids[i][1] <= 140):
+                # print("%d is in 1" % i)
                 cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
         for i in range(0, (len(stats)), 1):
-            if (centroids[i][0] >= 200 and centroids[i][0] <= 270 and centroids[i][1] >= 40 and centroids[i][1] <= 110):
+            if (centroids[i][0] >= 200 and centroids[i][0] <= 270 and centroids[i][1] >= 40 and centroids[i][1] <= 140):
                 cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
-                #print("%d is in 2" % i)
+                # print("%d is in 2" % i)
         for i in range(0, (len(stats)), 1):
             if (centroids[i][0] >= 40 and centroids[i][0] <= 110 and centroids[i][1] >= 200 and centroids[i][1] <= 270):
                 cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
-                #print("%d is in 3" % i)
+                # print("%d is in 3" % i)
         for i in range(0, (len(stats)), 1):
             if (centroids[i][0] >= 200 and centroids[i][0] <= 270 and centroids[i][1] >= 200 and centroids[i][
                 1] <= 270):
                 cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
-                #print("%d is in 4" % i)
+                # print("%d is in 4" % i)
 
         if (len(stats) < 4):
-            #print("too few decteted on %d" % counter)
-            #print((len(stats)))
+            # print("too few decteted on %d" % counter)
+            # print((len(stats)))
             for i in range((len(stats)), 5, 1):
                 cc_size_array.append(0)
 
@@ -408,16 +454,16 @@ for i in tqdm(range(len(imagePath))):
             exit(-1)
 
         # total_size_array = total_size_array + cc_size_array
-        #print("size data")
-        #print(cc_size_array)
+        # print("size data")
+        # print(cc_size_array)
         avg_size = np.average(cc_size_array)
-        #print(avg_size)
+        # print(avg_size)
         std = np.std(np.array(cc_size_array))
-        #print(std)
+        # print(std)
         Zscore_array = abs(scipy.stats.zscore(cc_size_array))
-        #print(Zscore_array)
+        # print(Zscore_array)
         Z_avg = np.average(Zscore_array)
-        #print(Z_avg)
+        # print(Z_avg)
         mod = 1.5  # if avg zscore is less than .5 or 40% that is rewarded
         if Z_avg >= .8:  # completely random number lol
             mod = 1
@@ -427,16 +473,17 @@ for i in tqdm(range(len(imagePath))):
                 above_size_ther += 1
 
         temp = ((10 * above_size_ther) - (mod * Z_avg))  # simply alg to tell is positive gets normalized later
-        #print(temp)
+        # print(temp)
 
-        #print("end of size data")
+        # print("end of size data")
 
         return cc_size_array, avg_size, std, Zscore_array, Z_avg, above_size_ther, mod, temp
 
-# determines how much color is in an image returns "colorfulness" value
+
+    # determines how much color is in an image returns "colorfulness" value
     def image_colorfulness(image):
         # split the image into its respective RGB components
-        (B, G, R) = cv2.split(image.astype("float"))
+        (B, G, R) = cv2.split(image.astype("float"))  # CV2 works in BGR not RGB
         # compute rg = R - G
         rg = np.absolute(R - G)
         # compute yb = 0.5 * (R + G) - B
@@ -450,21 +497,22 @@ for i in tqdm(range(len(imagePath))):
         # derive the "colorfulness" metric and return it
         return stdRoot + (0.3 * meanRoot)
 
-# crops cluster into cells and feeds to image_colorfulness
+
+    # crops cluster into cells and feeds to image_colorfulness
     def colorful_writer(color_counter):
-        dire = folder # used to be os.getcwd()
+        dire = folder  # used to be os.getcwd()
         path = dire + '/Cells'
         # https://www.pyimagesearch.com/2017/06/05/computing-image-colorfulness-with-opencv-and-python/
         color_array = []
         for i in range(0, 4):
-            #print("THIS IS COLOR COUNTER")
-            #print(color_counter)
+            # print("THIS IS COLOR COUNTER")
+            # print(color_counter)
             image = cv2.imread(os.path.join(path, "SMALL_CELL.%d.png" % color_counter))
             C = image_colorfulness(image)
             # display the colorfulness score on the image
             color_array.append(C)
-           # cv2.putText(image, "{:.2f}".format(C), (40, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
-            #cv2.imwrite(os.path.join(path, "SMALL_CELL.%d.png" % color_counter), image)
+            # cv2.putText(image, "{:.2f}".format(C), (40, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
+            # cv2.imwrite(os.path.join(path, "SMALL_CELL.%d.png" % color_counter), image)
             color_counter = color_counter + 1
 
         # total_color_array = total_color_array + color_array
@@ -472,28 +520,28 @@ for i in tqdm(range(len(imagePath))):
         std_color = np.std(np.array(color_array))
 
         if (len(color_array) < 4):
-            #print((len(color_array)))
+            # print((len(color_array)))
             for i in range((len(color_array)), 5, 1):
                 color_array.append(0)
 
         Zscore_array = abs(scipy.stats.zscore(color_array))
-        #print(Zscore_array)
+        # print(Zscore_array)
         Z_avg = np.average(Zscore_array)
-        #print(Z_avg)
+        # print(Z_avg)
         mod = 1.5  # if avg zscore is less than .5 or 40% that is rewarded
         if Z_avg >= .8:  # completely random number lol
             mod = 1
         above_size_ther = 0
         for i in range(0, len(color_array)):
-            if color_array[i] <= 23: #pretty white ones???
+            if color_array[i] <= 23:  # pretty white ones???
                 above_size_ther += 1
-        temp = ((10*above_size_ther) - (mod * Z_avg))
+        temp = ((10 * above_size_ther) - (mod * Z_avg))
 
-
-        #print(color_array)
+        # print(color_array)
         return color_array, avg_color, std_color, color_counter, Zscore_array, Z_avg, above_size_ther, mod, temp
 
-# normalizes size data and using max temp value determines if a hit took place
+
+    # normalizes size data and using max temp value determines if a hit took place
     def size_hit(temp_array):
         X = temp_array
         X_max = max(X)
@@ -507,7 +555,8 @@ for i in tqdm(range(len(imagePath))):
             normalize_array.append(x)
         return normalize_array
 
-# normalizes color data and using max color temp determines if a hit took place
+
+    # normalizes color data and using max color temp determines if a hit took place
     def color_hit(temp_color):
         normalize_array_color = []
         X = temp_color
@@ -521,7 +570,8 @@ for i in tqdm(range(len(imagePath))):
             normalize_array_color.append(x)
         return normalize_array_color
 
-# uses color and size hit to determine pos or not
+
+    # uses color and size hit to determine pos or not
     def pos_hit(normalize_array, normalize_array_color):
         pos_array = []
         for i in range(0, (image_counter * 96)):
@@ -531,44 +581,34 @@ for i in tqdm(range(len(imagePath))):
                 pos_array.append(0)
         return pos_array
 
-# sends data to excel
-    def excel_writer_liz(base_arr, platename_arr, Q1_size, Q2_size, Q3_size, Q4_size,
-                         total_size_avg_array, total_size_std_array, Z1_size, Z2_size, Z3_size, Z4_size, Z_avg,
-                         above_size_ther, mod_size, temp_array, Q1_color, Q2_color, Q3_color, Q4_color,
-                         total_color_avg_array, total_color_std_array, Z1_color, Z2_color, Z3_color,
-                         Z4_color, above_size_ther_color, mod_color, temp_color, size_pos, color_pos, pos_size, dire):
+
+    # sends data to excel
+    def excel_writer_liz(base_arr, platename_arr, size, color, dire):
         new_df = pd.DataFrame(
-            {'Image processed':(base_arr),'Cluster' :(platename_arr),
-             'Q1_size': (Q1_size), 'Q2_size': (Q2_size),'Q3_size': (Q3_size),
-             'Q4_size': (Q4_size),'Avg_size': (total_size_avg_array), 'Size_stdev': (total_size_std_array),
-             'Q1_Zscore': (Z1_size), 'Q2_Zscore': (Z2_size), 'Q3_Zscore': (Z3_size),
-             'Q4_Zscore': (Z4_size),'Avg_Zscore': (Z_avg), 'above_sizethres': (above_size_ther),
-             'modifier': (mod_size), 'temp': (temp_array), 'hit': (size_pos), 'Q1_color': (Q1_color), 'Q2_color': (Q2_color)
-                , 'Q3_color': (Q3_color), 'Q4_color': (Q4_color), 'Avg_color': (total_color_avg_array),
-             'Color_stdev': (total_color_std_array), 'Q1_color_Zscore' : (Z1_color), 'Q2_color_Zscore': (Z2_color),
-             'Q3_color_Zscore': (Z3_color),'Q4_color_Zscore': (Z4_color),
-             'color_Zscore_avg': (Z_avg_color), 'above color_thres': (above_size_ther_color), 'modifier_color': (mod_color),
-             'color_temp': (temp_color), 'colorhit': (color_pos), 'POSITIVE': (pos_size)})
+            {'Image processed': (base_arr), 'Cluster': (platename_arr),
+             'Size': (size), 'color': (color)})
         os.chdir(dire)
         Excel_name = "A_test.xlsx"
         new_df.to_excel(Excel_name)
 
-# sends data to excel
+
+    # sends data to excel
     def excel_writer_chris(base_arr, platename_arr, Q1_size, Q2_size, Q3_size, Q4_size,
-                         total_size_avg_array, total_size_std_array, Z1_size, Z2_size, Z3_size, Z4_size, Z_avg,
-                         above_size_ther, mod_size, temp_array, pos_size, dire):
+                           total_size_avg_array, total_size_std_array, Z1_size, Z2_size, Z3_size, Z4_size, Z_avg,
+                           above_size_ther, mod_size, temp_array, pos_size, dire):
         new_df = pd.DataFrame(
-            {'Image processed':(base_arr),'Cluster' :(platename_arr),
-             'Q1_size': (Q1_size), 'Q2_size': (Q2_size),'Q3_size': (Q3_size),
-             'Q4_size': (Q4_size),'Avg_size': (total_size_avg_array), 'Size_stdev': (total_size_std_array),
+            {'Image processed': (base_arr), 'Cluster': (platename_arr),
+             'Q1_size': (Q1_size), 'Q2_size': (Q2_size), 'Q3_size': (Q3_size),
+             'Q4_size': (Q4_size), 'Avg_size': (total_size_avg_array), 'Size_stdev': (total_size_std_array),
              'Q1_Zscore': (Z1_size), 'Q2_Zscore': (Z2_size), 'Q3_Zscore': (Z3_size),
-             'Q4_Zscore': (Z4_size),'Avg_Zscore': (Z_avg), '# above threshold': (above_size_ther),
+             'Q4_Zscore': (Z4_size), 'Avg_Zscore': (Z_avg), '# above threshold': (above_size_ther),
              'modifier': (mod_size), 'temp': (temp_array), 'hit': (pos_size)})
         os.chdir(dire)
         Excel_name = "A_test.xlsx"
         new_df.to_excel(Excel_name)
 
-##MAIN##
+
+    ##MAIN##
     toomanycounter = 1
     anothercounter = 1
     color_counter = 0
@@ -579,61 +619,45 @@ for i in tqdm(range(len(imagePath))):
     cluster_maker()
     # 0 means size and color looking for small and red
     if int(mode) == 0:
-        image_counter = image_counter + 1
-        for c in range(0, 96):
-            #print(c)
+        path = folder + '/Cells'
+        plate_number = 1
+        temp = 1
+        cc = []
+        color_array = []
+        # image_counter = image_counter + 1
+        for c in range(0, 384):
+            # print(c)
             base_arr.append(base)
             char = chr(toomanycounter + 64)
-            plate_name = ("U%d-%c%d" % (image_counter, char, anothercounter))
+            plate_name = ("U%d-%c%d" % (plate_number, char, anothercounter))
             platename_arr.append(plate_name)
-            returned_size = connected_comps_for_liz(c)
-            #print(returned_size)
-            returned_color = colorful_writer(color_counter)
-            anothercounter = anothercounter + 1
+            plate_number = plate_number + 1
+            if plate_number > 4:
+                plate_number = 1
+            temp = temp + 1
+            if temp > 4:
+                anothercounter = anothercounter + 1
+                temp = 1
             if anothercounter > 12:
                 anothercounter = 1
                 toomanycounter = toomanycounter + 1
-            color_counter = returned_color[3]
-            cc = []
-            cc = returned_size[0]
-            #print(cc)
-            Q1_size.append(cc[0])
-            Q2_size.append(cc[1])
-            Q3_size.append(cc[2])
-            Q4_size.append(cc[3])
-            total_size_array = (Q1_size + Q2_size + Q3_size + Q4_size)
-            total_size_avg_array.append(returned_size[1])
-            total_size_std_array.append(returned_size[2])
-            Zscore_array = (returned_size[3])
-            Z1_size.append(Zscore_array[0])
-            Z2_size.append(Zscore_array[1])
-            Z3_size.append(Zscore_array[2])
-            Z4_size.append(Zscore_array[3])
-            Z_avg.append(returned_size[4])
-            above_size_ther.append(returned_size[5])
-            mod_size.append(returned_size[6])
-            temp_array.append(returned_size[7])
-            plate_size.extend(returned_size[0])
-            color_array = []
-            color_array = (returned_color[0])
-            Q1_color.append(color_array[0])
-            Q2_color.append(color_array[1])
-            Q3_color.append(color_array[2])
-            Q4_color.append(color_array[3])
-            plate_color.extend(color_array)
-            total_color_array = (Q1_color + Q2_color + Q3_color + Q4_color)
-            total_color_avg_array.append(returned_color[1])
-            total_color_std_array.append(returned_color[2])
-            Z_color = []
-            Z_color = returned_color[4]
-            Z1_color.append(Z_color[0])
-            Z2_color.append(Z_color[1])
-            Z3_color.append(Z_color[2])
-            Z4_color.append(Z_color[3])
-            Z_avg_color.append(returned_color[5])
-            above_size_ther_color.append(returned_color[6])
-            mod_color.append(returned_color[7])
-            temp_color.append(returned_color[8])
+            print(plate_name)
+            returned_size = connected_comps_for_liz(c)
+            cc.append(returned_size)
+            total_size_array.append(returned_size)
+            image = cv2.imread(os.path.join(path, 'SMALL_CELL.%d.png' % c))
+            color = image_colorfulness(image)
+            color_array.append(color)
+            total_color_array.append(color)
+            # print(color)
+            # exit(-1)
+
+        # print(cc)
+        # print(len(cc))
+        # print(color_array)
+        # print(len(cc))
+        # exit(1)
+
         os.chdir(folder)
         dire = folder
         path_his = dire + '/Hist'
@@ -642,16 +666,16 @@ for i in tqdm(range(len(imagePath))):
         except OSError:
             pass
         os.chdir(path_his)
-        plt.title("Size Histogram for Image %s" %base)
+        plt.title("Size Histogram for Image %s" % base)
         plt.ylabel("Number of cells")
         plt.xlabel("Area of cells")
-        plt.hist(plate_size, bins=10)
+        plt.hist(cc, bins=20)
         plt.savefig("%s_size.png" % base)
         plt.close()
         plt.title("Color Histogram for Image %s" % base)
         plt.ylabel("Number of cells")
         plt.xlabel("colorfulness of cells")
-        plt.hist(plate_color, bins=10)
+        plt.hist(color_array, bins=20)
         plt.savefig("%s_color.png" % base)
         plt.close()
 
@@ -709,14 +733,10 @@ for i in tqdm(range(len(imagePath))):
         plt.close()
 
 if int(mode) == 0:
-    size_pos = size_hit(temp_array)
-    color_pos = color_hit(temp_color)
-    pos_size = pos_hit(size_pos, color_pos)
-    excel_writer_liz(base_arr, platename_arr, Q1_size, Q2_size, Q3_size, Q4_size,
-                     total_size_avg_array, total_size_std_array, Z1_size, Z2_size, Z3_size, Z4_size, Z_avg,
-                     above_size_ther, mod_size, temp_array, Q1_color, Q2_color, Q3_color, Q4_color,
-                     total_color_avg_array, total_color_std_array, Z1_color, Z2_color, Z3_color,
-                     Z4_color, above_size_ther_color, mod_color, temp_color, size_pos, color_pos, pos_size, folder)
+    # size_pos = size_hit(temp_array)
+    # color_pos = color_hit(temp_color)
+    # pos_size = pos_hit(size_pos, color_pos)
+    excel_writer_liz(base_arr, platename_arr, total_size_array, total_color_array, folder)
 if int(mode) == 1:
     pos_size = size_hit(temp_array)
     excel_writer_chris(base_arr, platename_arr, Q1_size, Q2_size, Q3_size, Q4_size,
@@ -726,18 +746,17 @@ beep = lambda x: os.system("echo -DONE! '\a';sleep 0.2;" * x)
 beep(5)
 easygui.msgbox(msg="DONE!!!", title="Yeast Classifier")
 os.chdir(path_his)
-plt.title("Total Size Histogram")
+plt.title("Size and color Histogram")
 plt.ylabel("Number of cells")
 plt.xlabel("Area of cells")
-plt.hist(total_size_array)
+plt.hist(total_size_array, bins=20, color='k')
 plt.savefig("Total_size.png")
 plt.close()
 plt.title("Total Color Histogram")
 plt.ylabel("Number of cells")
 plt.xlabel("colorfulness of cells")
-plt.hist(total_color_array)
+plt.hist(total_color_array, bins=20, color='g')
 plt.savefig("Total_color.png")
-
 
 """
 #kmeans stuff
@@ -755,7 +774,7 @@ for i, m in enumerate(kmeans.labels_): #changed from kmeans to dbscan
     print("    Copy: %s / %s" %(i, len(kmeans.labels_)), end="\r") #same here
     shutil.move(filelist[i], '/Users/gregglickert/Documents/GitHub/YeastClassification/cluster_test')
 """
-#His clustering
+# His clustering
 """
 plt.figure(figsize=(10, 7))
 plt.title("Dendrograms")
@@ -771,11 +790,6 @@ plt.scatter(X[labels==4, 0], X[labels==4, 1], s=50, marker='o', color='orange')
 plt.show()
 """
 
-
-
-
-
-
 """
 x = data[["Avg_size","Avg_color"]]
 plt.scatter(x["Avg_size"],x["Avg_color"])
@@ -783,7 +797,7 @@ plt.xlabel('Avg_size')
 plt.ylabel('Avg_color')
 plt.show()
 """
-#https://www.analyticsvidhya.com/blog/2019/08/comprehensive-guide-k-means-clustering/
+# https://www.analyticsvidhya.com/blog/2019/08/comprehensive-guide-k-means-clustering/
 
 """
 for i in range(0,96):
