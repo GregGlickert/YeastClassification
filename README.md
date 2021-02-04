@@ -1,6 +1,5 @@
 # YeastClassification
-Run script and GUI should open
-Output will be placed in image folder
+Run script and GUI should open (hopefully)
 ## Requires python install
 ### Using Anaconda 
 Environment can be built from included yml\
@@ -28,4 +27,6 @@ Imutils // pip install imutils
 EasyGUI // pip install easygui
 
 TQDM // pip install tqdm
+
+XLRD // pip install XLRD
 
