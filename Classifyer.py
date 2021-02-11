@@ -118,15 +118,29 @@ if excel_or_nah == 1:
             result = cv2.bitwise_not(result)
             cv2.imwrite(os.path.join(path, "AutoCrop.png"), result)
 
-            gray_image = pcv.rgb2gray_lab(result, 'b')
-            plate_threshold = cv2.adaptiveThreshold(gray_image, 255,
-                                                    cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 241,
-                                                    -1)  # 241 is good 981
+            L, a, b = cv2.split(result)
+            cv2.imwrite("gray_scale.png", L)
+            plate_threshold = cv2.adaptiveThreshold(b, 255,
+                                                    cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 87,
+                                                    -1)  # 867 is good 241
             cv2.imwrite(os.path.join(path, "plate_threshold.png"), plate_threshold)
 
             fill_again2 = pcv.fill(plate_threshold, 1000)
 
-            id_objects, obj_hierarchy = pcv.find_objects(img=image, mask=fill_again2)
+            cv2.imwrite(os.path.join(path, "fill_test.png"), fill_again2)
+            fill = pcv.fill_holes(fill_again2)
+            cv2.imwrite(os.path.join(path, "fill_test2.png"), fill)
+            nb_components, output, stats, centroids = cv2.connectedComponentsWithStats(fill, connectivity=8)
+            sizes = stats[1:, -1]
+            nb_components = nb_components - 1
+            min_size = 20000
+            img2 = np.zeros((output.shape))
+            for i in range(0, nb_components):
+                if sizes[i] <= min_size:
+                    img2[output == i + 1] = 255
+            cv2.imwrite(os.path.join(path, "remove_20000.png"), img2)   # this can be made better to speed it up
+            thresh_image = img2.astype(np.uint8)                         # maybe crop to the roi below then do it
+            id_objects, obj_hierarchy = pcv.find_objects(img=image, mask=thresh_image)
 
             roi1, roi_hierarchy = pcv.roi.rectangle(img=image, x=1950, y=800, h=75, w=75)
 
@@ -142,19 +156,20 @@ if excel_or_nah == 1:
             cv2.imwrite(os.path.join(path, "TEST.png"), result)
 
             output = cv2.connectedComponentsWithStats(kept_mask, connectivity=8)
-
+            stats = output[2]
             centroids = output[3]
             centroids_x = (int(centroids[1][0]))
             centroids_y = (int(centroids[1][1]))
+            #print(stats[1, cv2.CC_STAT_AREA])
             # print(centroids_x)
             # print(centroids_y)
 
             # print(centroids)
 
             left = (centroids_x - 70)
-            right = (centroids_x + 3750)
+            right = (centroids_x + 3755) #was 55
             top = (centroids_y - 80)
-            bottom = (centroids_y + 2450)
+            bottom = (centroids_y + 2462)
             # print(top)
             # print(bottom)
             image = Image.open(imagePath)
@@ -167,14 +182,13 @@ if excel_or_nah == 1:
             circle_me = cv2.imread(os.path.join(path, "Cropped_full_yeast.png"))
             cropped_img = cv2.imread(
                 os.path.join(path, "Cropped_full_yeast.png"))  # changed from Yeast_Cluster.%d.png  %counter
-            blue_image = pcv.rgb2gray_lab(cropped_img, 'b')  # can do l a or b
-            Gaussian_blue = cv2.adaptiveThreshold(blue_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 241,
+            L, a, b = cv2.split(cropped_img)  # can do l a or b
+            Gaussian_blue = cv2.adaptiveThreshold(b, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 241,
                                                   -1)  # For liz's pictures 241
             cv2.imwrite(os.path.join(path, "blue_test.png"), Gaussian_blue)
             blur_image = pcv.median_blur(Gaussian_blue, 10)
-            heavy_fill_blue = pcv.fill(blur_image, 800)  # value 400
+            heavy_fill_blue = pcv.fill(blur_image, 1000)  # value 400
             cv2.imwrite(os.path.join(path, "Cropped_Threshold.png"), heavy_fill_blue)
-
 
         # crops the plate into the clusters
         def cluster_maker(image_count):
@@ -491,6 +505,13 @@ if excel_or_nah == 1:
                 answer = 0
                 if len(stats) > 1:
                     answer = (stats[1, cv2.CC_STAT_AREA])
+                    if answer < 300:
+                        answer = (stats[2, cv2.CC_STAT_AREA])
+
+                if answer < 300:
+                    print('Issue with cell%d' %c)
+                    plt.imshow(circle_me)
+                    plt.show()
                 return answer
 
             if flag == 1:
@@ -1017,6 +1038,8 @@ if excel_or_nah == 1:
             plt.hist(plate_size, bins=10)
             plt.savefig("%s_size.png" % base)
             plt.close()
+            path_dump = folder + '/Classifyer_dump'
+            #shutil.rmtree(path_dump)
 
     if int(mode) == 0:
         # size_pos = size_hit(temp_array)
