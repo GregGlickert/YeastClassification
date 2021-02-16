@@ -23,6 +23,9 @@ import easygui
 from tqdm import tqdm
 import xlrd
 
+
+
+
 total_size_array = []
 total_size_avg_array = []
 total_size_std_array = []
@@ -59,6 +62,7 @@ mod_color = []
 temp_color = []
 
 image_counter = 0
+
 
 # GUI#
 excel_or_nah = easygui.indexbox(msg="select what you would like to do",
@@ -119,7 +123,7 @@ if excel_or_nah == 1:
             cv2.imwrite(os.path.join(path, "AutoCrop.png"), result)
 
             L, a, b = cv2.split(result)
-            cv2.imwrite("gray_scale.png", L)
+            # cv2.imwrite("gray_scale.png", L)
             plate_threshold = cv2.adaptiveThreshold(b, 255,
                                                     cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 87,
                                                     -1)  # 867 is good 241
@@ -130,7 +134,8 @@ if excel_or_nah == 1:
             cv2.imwrite(os.path.join(path, "fill_test.png"), fill_again2)
             fill = pcv.fill_holes(fill_again2)
             cv2.imwrite(os.path.join(path, "fill_test2.png"), fill)
-            nb_components, output, stats, centroids = cv2.connectedComponentsWithStats(fill, connectivity=8)
+            blur_image = pcv.median_blur(fill, 10)
+            nb_components, output, stats, centroids = cv2.connectedComponentsWithStats(blur_image, connectivity=8)
             sizes = stats[1:, -1]
             nb_components = nb_components - 1
             min_size = 20000
@@ -183,12 +188,13 @@ if excel_or_nah == 1:
             cropped_img = cv2.imread(
                 os.path.join(path, "Cropped_full_yeast.png"))  # changed from Yeast_Cluster.%d.png  %counter
             L, a, b = cv2.split(cropped_img)  # can do l a or b
-            Gaussian_blue = cv2.adaptiveThreshold(b, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 241,
+            Gaussian_blue = cv2.adaptiveThreshold(b, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 87,
                                                   -1)  # For liz's pictures 241
             cv2.imwrite(os.path.join(path, "blue_test.png"), Gaussian_blue)
             blur_image = pcv.median_blur(Gaussian_blue, 10)
-            heavy_fill_blue = pcv.fill(blur_image, 1000)  # value 400
-            cv2.imwrite(os.path.join(path, "Cropped_Threshold.png"), heavy_fill_blue)
+            heavy_fill_blue = pcv.fill(blur_image, 2000)  # value 400
+            hole_fill = pcv.fill_holes(heavy_fill_blue)
+            cv2.imwrite(os.path.join(path, "Cropped_Threshold.png"), hole_fill)
 
         # crops the plate into the clusters
         def cluster_maker(image_count):
