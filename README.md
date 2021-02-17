@@ -1,34 +1,33 @@
 # YeastClassification
+## Requires python install (Tested on 3.7.9)
 Run script and GUI should open (hopefully)
-## Requires python install
-### Using Anaconda 
+### Using Anaconda (Environment tested to work)
 Environment can be built from included yml\
 Will have a lot of not needed libraries but should still work\
 In the future will provide better yml file with less libraries\
-command - conda env create -f TEST_ENVIRONMENT.yml
-
+command - ```conda env create -f TEST_ENVIRONMENT.yml```
 ### Using PyPi (subject to change still)
-OpenCV // pip install opencv-python
+OpenCV // ```pip install opencv-python```
 
-Numpy // pip install numpy
+Numpy // ```pip install numpy```
 
-Matplotlib // pip install matplotlib
+Matplotlib // ```pip install matplotlib```
 
-Sklearn // pip install -U scikit-learn
+Sklearn // ```pip install -U scikit-learn```
 
-PlantCV // pip install plantcv
+PlantCV // ```pip install plantcv```
 
-Shutil // pip install pytest-shutil
+Shutil // ```pip install pytest-shutil```
 
-Pandas // pip install pandas
+Pandas // ```pip install pandas```
 
-Openpyxl // pip install openpyxl
+Openpyxl // ```pip install openpyxl```
 
-Imutils // pip install imutils
+Imutils // ```pip install imutils```
 
-EasyGUI // pip install easygui
+EasyGUI // ```pip install easygui```
 
-TQDM // pip install tqdm
+TQDM // ```pip install tqdm```
 
-XLRD // pip install XLRD
+XLRD // ```pip install XLRD```
 
