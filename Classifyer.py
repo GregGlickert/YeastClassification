@@ -3,7 +3,8 @@ from PIL import Image
 from plantcv import plantcv as pcv
 import cv2
 import numpy as np
-import os, shutil, glob, os.path
+import os
+import os.path
 import pandas as pd
 import matplotlib.pyplot as plt
 # from openpyxl import load_workbook
@@ -73,9 +74,22 @@ if excel_or_nah == 1:
                                 "\nIMPORTANT"
                                 "\nCan not process a single image folder MUST have two or more images at this time"
                                 "\nFolder also must ONLY contain images wanting to be processed and nothing else at this time"
-                                "\nOutputs will be placed in folder selected",
+                                "\nOutputs will be placed in folder selected"
+                                "\nIMAGES MUST ALSO BEEN NAMED ALPHABETICALLY TO ENSURE THEY ARE PROCESSED IN THE RIGHT ORDER"
+                                "\nFOR PLATE TO BE 'SEEN' CORRECT THE LEFT TOP OR LEFT BOTTOM CELL MUST BE PRESENT AT THIS TIME",
                             title="Yeast Classifier",
                             choices=("Size and color", "Size"))
+    if mode == 1:
+        easygui.msgbox("NOTE"
+                       "\nCurrently the Size function is set for 384 well plates with each cluster being"
+                       "\nU1-A1 U1-A1 "
+                       "\nU1-A1 U1-A1")
+    if mode == 0:
+        easygui.msgbox("NOTE"
+                       "\nCurrently the Size and color function is set up for 384 well plates with each cluster being"
+                       "\n U1-A1 U2-A1 "
+                       "\n U3-A1 U4-A1"
+                       "\nWith the 6th plate being a 96 well")
     folder = easygui.diropenbox()
     # Loops over every image in the selected folder
     imagePath = sorted(list(paths.list_images(folder)))
@@ -149,32 +163,64 @@ if excel_or_nah == 1:
 
             roi1, roi_hierarchy = pcv.roi.rectangle(img=image, x=1950, y=800, h=75, w=75)
 
-            roi_objects, hierarchy3, kept_mask, obj_area = pcv.roi_objects(img=image, roi_contour=roi1,
-                                                                           roi_hierarchy=roi_hierarchy,
-                                                                           object_contour=id_objects,
-                                                                           obj_hierarchy=obj_hierarchy,
-                                                                           roi_type='partial')
-            cv2.imwrite(os.path.join(path, "test_mask.png"), kept_mask)
-            mask = cv2.imread(os.path.join(path, "test_mask.png"))
-            result = image * (mask.astype(image.dtype))
-            result = cv2.bitwise_not(result)
-            cv2.imwrite(os.path.join(path, "TEST.png"), result)
+            try:
+                where_cell = 0
+                roi_objects, hierarchy3, kept_mask, obj_area = pcv.roi_objects(img=image, roi_contour=roi1,
+                                                                               roi_hierarchy=roi_hierarchy,
+                                                                               object_contour=id_objects,
+                                                                               obj_hierarchy=obj_hierarchy,
+                                                                               roi_type='partial')
 
-            output = cv2.connectedComponentsWithStats(kept_mask, connectivity=8)
-            stats = output[2]
-            centroids = output[3]
-            centroids_x = (int(centroids[1][0]))
-            centroids_y = (int(centroids[1][1]))
+                cv2.imwrite(os.path.join(path, "test_mask.png"), kept_mask)
+                mask = cv2.imread(os.path.join(path, "test_mask.png"))
+                result = image * (mask.astype(image.dtype))
+                result = cv2.bitwise_not(result)
+                cv2.imwrite(os.path.join(path, "TEST.png"), result)
+
+                output = cv2.connectedComponentsWithStats(kept_mask, connectivity=8)
+                stats = output[2]
+                centroids = output[3]
+                centroids_x = (int(centroids[1][0]))
+                centroids_y = (int(centroids[1][1]))
+            except:
+                where_cell = 1
+                print("did this work?")
+                roi1, roi_hierarchy = pcv.roi.rectangle(img=image, x=1950, y=3200, h=75, w=75)
+                roi_objects, hierarchy3, kept_mask, obj_area = pcv.roi_objects(img=image, roi_contour=roi1,
+                                                                               roi_hierarchy=roi_hierarchy,
+                                                                               object_contour=id_objects,
+                                                                               obj_hierarchy=obj_hierarchy,
+                                                                               roi_type='partial')
+                cv2.imwrite(os.path.join(path, "test_mask.png"), kept_mask)
+                mask = cv2.imread(os.path.join(path, "test_mask.png"))
+                result = image * (mask.astype(image.dtype))
+                result = cv2.bitwise_not(result)
+                cv2.imwrite(os.path.join(path, "TEST.png"), result)
+
+                output = cv2.connectedComponentsWithStats(kept_mask, connectivity=8)
+                stats = output[2]
+                centroids = output[3]
+                centroids_x = (int(centroids[1][0]))
+                centroids_y = (int(centroids[1][1]))
+            flag = 0
             #print(stats[1, cv2.CC_STAT_AREA])
+            if((stats[1, cv2.CC_STAT_AREA]) > 4000):
+                flag = 30
             # print(centroids_x)
             # print(centroids_y)
 
             # print(centroids)
+            if(where_cell == 0):
+                left = (centroids_x - 70)
+                right = (centroids_x + 3725 + flag) #was 55
+                top = (centroids_y - 80)
+                bottom = (centroids_y + 2462)
+            if(where_cell == 1):
+                left = (centroids_x - 70)
+                right = (centroids_x + 3715 + flag)
+                top = (centroids_y - 2480)
+                bottom = (centroids_y + 62)
 
-            left = (centroids_x - 70)
-            right = (centroids_x + 3755) #was 55
-            top = (centroids_y - 80)
-            bottom = (centroids_y + 2462)
             # print(top)
             # print(bottom)
             image = Image.open(imagePath)
@@ -195,6 +241,7 @@ if excel_or_nah == 1:
             heavy_fill_blue = pcv.fill(blur_image, 2000)  # value 400
             hole_fill = pcv.fill_holes(heavy_fill_blue)
             cv2.imwrite(os.path.join(path, "Cropped_Threshold.png"), hole_fill)
+
 
         # crops the plate into the clusters
         def cluster_maker(image_count):
@@ -612,9 +659,9 @@ if excel_or_nah == 1:
         def connected_comps_for_Chris(counter):
             dire = folder  # used to be os.getcwd()
             path = dire + '/Yeast_cluster_inv'
-            cropped_img = cv2.imread(os.path.join(path, 'Yeast_Cluster.%d.png' % counter),
+            cropped_img = cv2.imread(os.path.join(path, 'Yeast_Cluster_Bin.%d.png' % counter),
                                      cv2.IMREAD_UNCHANGED)  # changed from Yeast_Cluster.%d.png  %counter
-            circle_me = cv2.imread(os.path.join(path, "Yeast_Cluster.%d.png" % counter))
+            circle_me = cv2.imread(os.path.join(path, "Yeast_Cluster_Bin.%d.png" % counter))
 
             connected_counter = 0
 
@@ -631,31 +678,52 @@ if excel_or_nah == 1:
             # print("Currently on cell %d" % counter)
             cc_size_array = []
             # print(centroids)
+            cell_counter1 = 0
+            cell_counter2 = 0
+            cell_counter3 = 0
+            cell_counter4 = 0
             for i in range(0, (len(stats)), 1):
-                if (centroids[i][0] >= 40 and centroids[i][0] <= 110 and centroids[i][1] >= 40 and centroids[i][1] <= 140):
+                if (centroids[i][0] >= 30 and centroids[i][0] <= 110 and centroids[i][1] >= 40 and centroids[i][1] <= 140):
                     # print("%d is in 1" % i)
                     cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
+                else:
+                    cell_counter1 = cell_counter1 + 1
+                if (cell_counter1 == len(stats)):
+                    cc_size_array.append(0)
             for i in range(0, (len(stats)), 1):
-                if (centroids[i][0] >= 200 and centroids[i][0] <= 270 and centroids[i][1] >= 40 and centroids[i][1] <= 140):
+                if (centroids[i][0] >= 180 and centroids[i][0] <= 270 and centroids[i][1] >= 40 and centroids[i][1] <= 140):
                     cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
                     # print("%d is in 2" % i)
+                else:
+                    cell_counter2 = cell_counter2 + 1
+                if (cell_counter2 == len(stats)):
+                    cc_size_array.append(0)
             for i in range(0, (len(stats)), 1):
-                if (centroids[i][0] >= 40 and centroids[i][0] <= 110 and centroids[i][1] >= 200 and centroids[i][1] <= 270):
+                if (centroids[i][0] >= 30 and centroids[i][0] <= 110 and centroids[i][1] >= 200 and centroids[i][1] <= 270):
                     cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
                     # print("%d is in 3" % i)
+                else:
+                    cell_counter3 = cell_counter3 + 1
+                if (cell_counter3 == len(stats)):
+                    cc_size_array.append(0)
             for i in range(0, (len(stats)), 1):
-                if (centroids[i][0] >= 200 and centroids[i][0] <= 270 and centroids[i][1] >= 200 and centroids[i][
+                if (centroids[i][0] >= 180 and centroids[i][0] <= 270 and centroids[i][1] >= 200 and centroids[i][
                     1] <= 270):
                     cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
                     # print("%d is in 4" % i)
-
-            if (len(stats) < 4):
+                else:
+                    cell_counter4 = cell_counter4 + 1
+                if (cell_counter4 == len(stats)):
+                    cc_size_array.append(0)
+            """
+            if (len(cell_counter) < 4):
                 # print("too few decteted on %d" % counter)
                 # print((len(stats)))
                 for i in range((len(stats)), 5, 1):
                     cc_size_array.append(0)
-
+            """
             if (len(cc_size_array) >= 5):
+                print(cc_size_array)
                 print("problem on cell %d" % counter)
                 exit(-1)
 
@@ -682,8 +750,8 @@ if excel_or_nah == 1:
             # print(temp)
 
             # print("end of size data")
-
-            return cc_size_array, avg_size, std, Zscore_array, Z_avg, above_size_ther, mod, temp
+            #print(cc_size_array)
+            return cc_size_array, avg_size, std, Zscore_array, Z_avg, above_size_ther, mod, temp, centroids
 
 
         def cellFinder(c, flag):
@@ -1010,7 +1078,10 @@ if excel_or_nah == 1:
                 color_counter = returned_color[3]
                 cc = []
                 cc = returned_size[0]
-                # print(cc)
+                print('Image %d' %image_counter)
+                print('cluster %d' %c)
+                print(cc)
+                print(returned_size[8])
                 Q1_size.append(cc[0])
                 Q2_size.append(cc[1])
                 Q3_size.append(cc[2])
