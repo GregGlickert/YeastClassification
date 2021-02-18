@@ -61,6 +61,7 @@ Z_avg_color = []
 above_size_ther_color = []
 mod_color = []
 temp_color = []
+red_array = []
 
 image_counter = 0
 
@@ -785,6 +786,41 @@ if excel_or_nah == 1:
                 cv2.imwrite(os.path.join(path, 'cell.%d.png' % c), result)
 
 
+
+        def rednessExtractor(c, img):
+            red_path = folder + '/red'
+            try:
+                os.makedirs(red_path)
+            except OSError:
+                pass
+
+            img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+            # lower mask (0-10)
+            lower_red = np.array([0, 50, 50])
+            upper_red = np.array([10, 255, 255])
+            mask0 = cv2.inRange(img_hsv, lower_red, upper_red)
+
+            # upper mask (170-180)
+            lower_red = np.array([170, 50, 50])
+            upper_red = np.array([180, 255, 255])
+            mask1 = cv2.inRange(img_hsv, lower_red, upper_red)
+
+            # join my masks
+            mask = mask0 + mask1
+
+            # set my output img to zero everywhere except my mask
+            output_img = img.copy()
+            output_img[np.where(mask == 0)] = 0
+
+            # or HSV image
+            output_hsv = img_hsv.copy()
+            output_hsv[np.where(mask == 0)] = 0
+
+            cv2.imwrite(os.path.join(red_path, 'cell.%d.png' % c), output_img)
+
+
+
         # determines how much color is in an image returns "colorfulness" value
         def image_colorfulness(image):
             # split the image into its respective RGB components
@@ -888,10 +924,12 @@ if excel_or_nah == 1:
 
 
         # sends data to excel
-        def excel_writer_liz(base_arr, platename_arr, size, color, dire):
+        def excel_writer_liz(base_arr, platename_arr, size, color, dire, red):
+            print(len(red))
+            print(len(color))
             new_df = pd.DataFrame(
                 {'Image processed': (base_arr), 'Cluster': (platename_arr),
-                 'Size': (size), 'color': (color)})
+                 'Size': (size), 'color': (color), 'red': (red)})
             os.chdir(dire)
             Excel_name = "A_test.xlsx"
             new_df.to_excel(Excel_name)
@@ -927,6 +965,7 @@ if excel_or_nah == 1:
             path = folder + '/Cells'
             path2 = folder + '/Found_cell'
             path3 = folder + 'Yeast_cluster'
+            red_path = folder + '/red'
             plate_number = 1
             temp = 1
             cc = []
@@ -959,8 +998,12 @@ if excel_or_nah == 1:
                     total_size_array.append(returned_size)
                     cellFinder(c, flag)
                     img = cv2.imread(os.path.join(path2,'cell.%d.png' % c))
+                    rednessExtractor(c, img)
+                    red_img = cv2.imread(os.path.join(red_path,'cell.%d.png' % c))
+                    red = image_colorfulness(red_img)
                     color = image_colorfulness(img)
                     color_array.append(color)
+                    red_array.append(red)
                     total_color_array.append(color)
                 #shutil.rmtree(path)
                 #shutil.rmtree(path2)
@@ -1122,7 +1165,7 @@ if excel_or_nah == 1:
         # size_pos = size_hit(temp_array)
         # color_pos = color_hit(temp_color)
         # pos_size = pos_hit(size_pos, color_pos)
-        excel_writer_liz(base_arr, platename_arr, total_size_array, total_color_array, folder)
+        excel_writer_liz(base_arr, platename_arr, total_size_array, total_color_array, folder, red_array)
     if int(mode) == 1:
         pos_size = size_hit(temp_array)
         excel_writer_chris(base_arr, platename_arr, Q1_size, Q2_size, Q3_size, Q4_size,
