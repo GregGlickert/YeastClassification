@@ -64,7 +64,7 @@ temp_color = []
 red_array = []
 
 image_counter = 0
-
+#pcv.params.debug = "print"
 
 # GUI#
 excel_or_nah = easygui.indexbox(msg="select what you would like to do",
@@ -137,6 +137,13 @@ if excel_or_nah == 1:
             result = cv2.bitwise_not(result)
             cv2.imwrite(os.path.join(path, "AutoCrop.png"), result)
 
+            output = cv2.connectedComponentsWithStats(kept_mask, connectivity=8)
+            stats = output[2]
+            left = (stats[1, cv2.CC_STAT_LEFT])
+            #print(stats[1, cv2.CC_STAT_TOP])
+            #print(stats[1, cv2.CC_STAT_HEIGHT])
+            # exit(2)
+
             L, a, b = cv2.split(result)
             # cv2.imwrite("gray_scale.png", L)
             plate_threshold = cv2.adaptiveThreshold(b, 255,
@@ -147,9 +154,9 @@ if excel_or_nah == 1:
             fill_again2 = pcv.fill(plate_threshold, 1000)
 
             cv2.imwrite(os.path.join(path, "fill_test.png"), fill_again2)
-            fill = pcv.fill_holes(fill_again2)
-            cv2.imwrite(os.path.join(path, "fill_test2.png"), fill)
-            blur_image = pcv.median_blur(fill, 10)
+            #fill = pcv.fill_holes(fill_again2)
+            #cv2.imwrite(os.path.join(path, "fill_test2.png"), fill)
+            blur_image = pcv.median_blur(fill_again2, 10)
             nb_components, output, stats, centroids = cv2.connectedComponentsWithStats(blur_image, connectivity=8)
             sizes = stats[1:, -1]
             nb_components = nb_components - 1
@@ -158,12 +165,12 @@ if excel_or_nah == 1:
             for i in range(0, nb_components):
                 if sizes[i] <= min_size:
                     img2[output == i + 1] = 255
-            cv2.imwrite(os.path.join(path, "remove_20000.png"), img2)   # this can be made better to speed it up
-            thresh_image = img2.astype(np.uint8)                         # maybe crop to the roi below then do it
+            cv2.imwrite(os.path.join(path, "remove_20000.png"), img2)  # this can be made better to speed it up
+            thresh_image = img2.astype(np.uint8)  # maybe crop to the roi below then do it
             id_objects, obj_hierarchy = pcv.find_objects(img=image, mask=thresh_image)
 
-            roi1, roi_hierarchy = pcv.roi.rectangle(img=image, x=1950, y=800, h=75, w=75)
-
+            roi1, roi_hierarchy = pcv.roi.rectangle(img=image, x=(left + 380), y=700, h=100,
+                                                    w=100)
             try:
                 where_cell = 0
                 roi_objects, hierarchy3, kept_mask, obj_area = pcv.roi_objects(img=image, roi_contour=roi1,
@@ -186,7 +193,7 @@ if excel_or_nah == 1:
             except:
                 where_cell = 1
                 print("did this work?")
-                roi1, roi_hierarchy = pcv.roi.rectangle(img=image, x=1950, y=3200, h=75, w=75)
+                roi1, roi_hierarchy = pcv.roi.rectangle(img=image, x=(left + 380), y=3200, h=100, w=100)
                 roi_objects, hierarchy3, kept_mask, obj_area = pcv.roi_objects(img=image, roi_contour=roi1,
                                                                                roi_hierarchy=roi_hierarchy,
                                                                                object_contour=id_objects,
@@ -204,19 +211,20 @@ if excel_or_nah == 1:
                 centroids_x = (int(centroids[1][0]))
                 centroids_y = (int(centroids[1][1]))
             flag = 0
+
             #print(stats[1, cv2.CC_STAT_AREA])
-            if((stats[1, cv2.CC_STAT_AREA]) > 4000):
+            if ((stats[1, cv2.CC_STAT_AREA]) > 4000):
                 flag = 30
             # print(centroids_x)
             # print(centroids_y)
 
             # print(centroids)
-            if(where_cell == 0):
+            if (where_cell == 0):
                 left = (centroids_x - 70)
-                right = (centroids_x + 3725 + flag) #was 55
+                right = (centroids_x + 3715 + flag)  # was 55
                 top = (centroids_y - 80)
                 bottom = (centroids_y + 2462)
-            if(where_cell == 1):
+            if (where_cell == 1):
                 left = (centroids_x - 70)
                 right = (centroids_x + 3715 + flag)
                 top = (centroids_y - 2480)
@@ -289,8 +297,8 @@ if excel_or_nah == 1:
                     columnImage = (os.path.join(path, "Yeast_Row.%d.png" % anotherCounter))
                     Each_Image = Image.open(columnImage)
                     sizeX2, sizeY2 = Each_Image.size
-                    Each_Image_sizeX = round(sizeX2 / 12)
-                    Each_Image_sizeY = round(sizeY2 / 8)
+                    Each_Image_sizeX = float((sizeX2 / 12) - 3)
+                    Each_Image_sizeY = float((sizeY2 / 8) - 3)
                     anotherCounter += 1
                     widthCounter1 = 0
                     widthCounter2 = Each_Image_sizeX
@@ -318,8 +326,8 @@ if excel_or_nah == 1:
                     columnImage = (os.path.join(path, "Yeast_Row.%d.png" % anotherCounter))
                     Each_Image = Image.open(columnImage)
                     sizeX2, sizeY2 = Each_Image.size
-                    Each_Image_sizeX = round(sizeX2 / 12)
-                    Each_Image_sizeY = round(sizeY2 / 8)
+                    Each_Image_sizeX = float((sizeX2 / 12) - 3)
+                    Each_Image_sizeY = float((sizeY2 / 8) - 3) #cause the far x is a bit to big and hard to get perfect
                     anotherCounter += 1
                     widthCounter1 = 0
                     widthCounter2 = Each_Image_sizeX
@@ -561,11 +569,12 @@ if excel_or_nah == 1:
                     answer = (stats[1, cv2.CC_STAT_AREA])
                     if answer < 300:
                         answer = (stats[2, cv2.CC_STAT_AREA])
-
+                        print(answer)
+                """
                 if answer < 300:
                     print('Issue with cell%d' %c)
                     plt.imshow(circle_me)
-                    plt.show()
+                """
                 return answer
 
             if flag == 1:
@@ -683,10 +692,18 @@ if excel_or_nah == 1:
             cell_counter2 = 0
             cell_counter3 = 0
             cell_counter4 = 0
+            radius = 65
+            thickness = 2
+            color = (232, 161, 20)
+            hit_counter = 1
             for i in range(0, (len(stats)), 1):
                 if (centroids[i][0] >= 30 and centroids[i][0] <= 110 and centroids[i][1] >= 40 and centroids[i][1] <= 140):
                     # print("%d is in 1" % i)
                     cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
+                    centroid = int(centroids[i][0]), int(centroids[i][1])
+                    cv2.putText(circle_me, "%d" % hit_counter, centroid, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                                fontScale=1, color=color, thickness=thickness)
+                    hit_counter = hit_counter+1
                 else:
                     cell_counter1 = cell_counter1 + 1
                 if (cell_counter1 == len(stats)):
@@ -694,6 +711,10 @@ if excel_or_nah == 1:
             for i in range(0, (len(stats)), 1):
                 if (centroids[i][0] >= 180 and centroids[i][0] <= 270 and centroids[i][1] >= 40 and centroids[i][1] <= 140):
                     cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
+                    centroid = int(centroids[i][0]), int(centroids[i][1])
+                    cv2.putText(circle_me, "%d" % hit_counter, centroid, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                                fontScale=1, color=color, thickness=thickness)
+                    hit_counter = hit_counter+1
                     # print("%d is in 2" % i)
                 else:
                     cell_counter2 = cell_counter2 + 1
@@ -702,6 +723,10 @@ if excel_or_nah == 1:
             for i in range(0, (len(stats)), 1):
                 if (centroids[i][0] >= 30 and centroids[i][0] <= 110 and centroids[i][1] >= 200 and centroids[i][1] <= 270):
                     cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
+                    centroid = int(centroids[i][0]), int(centroids[i][1])
+                    cv2.putText(circle_me, "%d" % hit_counter, centroid, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                                fontScale=1, color=color, thickness=thickness)
+                    hit_counter = hit_counter+1
                     # print("%d is in 3" % i)
                 else:
                     cell_counter3 = cell_counter3 + 1
@@ -711,11 +736,17 @@ if excel_or_nah == 1:
                 if (centroids[i][0] >= 180 and centroids[i][0] <= 270 and centroids[i][1] >= 200 and centroids[i][
                     1] <= 270):
                     cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
+                    centroid = int(centroids[i][0]), int(centroids[i][1])
+                    cv2.putText(circle_me, "%d" % hit_counter, centroid, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                                fontScale=1, color=color, thickness=thickness)
+                    hit_counter = hit_counter+1
                     # print("%d is in 4" % i)
                 else:
                     cell_counter4 = cell_counter4 + 1
                 if (cell_counter4 == len(stats)):
                     cc_size_array.append(0)
+            cv2.imwrite("centroid test.png", circle_me)
+
             """
             if (len(cell_counter) < 4):
                 # print("too few decteted on %d" % counter)
@@ -726,7 +757,12 @@ if excel_or_nah == 1:
             if (len(cc_size_array) >= 5):
                 print(cc_size_array)
                 print("problem on cell %d" % counter)
-                exit(-1)
+                image = Image.open("centroid test.png")
+                image.show()
+                removed = input("Enter value: ")
+                image.close()
+                removed = (int(removed) - 1)
+                del cc_size_array[(int(removed))]
 
             # total_size_array = total_size_array + cc_size_array
             # print("size data")
@@ -925,8 +961,8 @@ if excel_or_nah == 1:
 
         # sends data to excel
         def excel_writer_liz(base_arr, platename_arr, size, color, dire, red):
-            print(len(red))
-            print(len(color))
+            #print(len(red))
+            #print(len(color))
             new_df = pd.DataFrame(
                 {'Image processed': (base_arr), 'Cluster': (platename_arr),
                  'Size': (size), 'color': (color), 'red': (red)})
@@ -1030,6 +1066,10 @@ if excel_or_nah == 1:
                     total_size_array.append(returned_size)
                     cellFinder(c, flag)
                     img = cv2.imread(os.path.join(path2, 'cell.%d.png' % c))
+                    rednessExtractor(c, img)
+                    red_img = cv2.imread(os.path.join(red_path,'cell.%d.png' % c))
+                    red = image_colorfulness(red_img)
+                    red_array.append(red)
                     color = image_colorfulness(img)
                     color_array.append(color)
                     total_color_array.append(color)
