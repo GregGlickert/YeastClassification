@@ -743,8 +743,8 @@ if excel_or_nah == 1:
                 if (cell_counter3 == len(stats)):
                     cc_size_array.append(0)
             for i in range(0, (len(stats)), 1):
-                if (centroids[i][0] >= 200 and centroids[i][0] <= 270 and centroids[i][1] >= 200 and centroids[i][
-                    1] <= 270):
+                if (centroids[i][0] >= 200 and centroids[i][0] <= 270 and centroids[i][1] >= 200 and centroids[i][1]
+                        <= 270):
                     cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
                     centroid = int(centroids[i][0]), int(centroids[i][1])
                     cv2.putText(circle_me, "%d" % hit_counter, centroid, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
@@ -758,7 +758,7 @@ if excel_or_nah == 1:
             cv2.imwrite("centroid test.png", circle_me)
 
 
-            while(len(cc_size_array) >= 5):
+            if (len(cc_size_array) >= 5):
                 print(cc_size_array)
                 print("problem on cell %d" % counter)
                 image = Image.open("centroid test.png")
@@ -766,6 +766,25 @@ if excel_or_nah == 1:
                 removed = input("Enter value: ")
                 image.close()
                 removed = (int(removed) - 1)
+                del cc_size_array[(int(removed))]
+
+            if (len(cc_size_array) >= 5):
+                print(cc_size_array)
+                print("problem on cell %d" % counter)
+                image = Image.open("centroid test.png")
+                image.show()
+                removed = input("Enter value: ")
+                image.close()
+                removed = (int(removed) - 2)
+                del cc_size_array[(int(removed))]
+            if (len(cc_size_array) >= 5):
+                print(cc_size_array)
+                print("problem on cell %d" % counter)
+                image = Image.open("centroid test.png")
+                image.show()
+                removed = input("Enter value: ")
+                image.close()
+                removed = (int(removed) - 3)
                 del cc_size_array[(int(removed))]
 
             # total_size_array = total_size_array + cc_size_array
