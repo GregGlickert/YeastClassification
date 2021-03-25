@@ -66,6 +66,7 @@ temp_color = []
 red_array = []
 
 image_counter = 0
+TF_was = 1
 #pcv.params.debug = "print"
 
 # GUI#
@@ -93,6 +94,13 @@ if excel_or_nah == 1:
                        "\n U1-A1 U2-A1 "
                        "\n U3-A1 U4-A1"
                        "\nWith the 6th plate being a 96 well")
+        TF = easygui.indexbox(msg='Would you like to append TF library', title='Yeast Classifier',
+                              choices=("Yes", "No"))
+        if(TF == 0):
+            TF_path = easygui.fileopenbox()
+            df = pd.read_excel(TF_path)
+            df = df.set_index(['Clone location (plate-well)'])
+            in_order = pd.DataFrame(columns=df.columns)
     folder = easygui.diropenbox()
     # Loops over every image in the selected folder
     imagePath = sorted(list(paths.list_images(folder)))
@@ -223,7 +231,7 @@ if excel_or_nah == 1:
             # print(centroids)
             if (where_cell == 0):
                 left = (centroids_x - 70)
-                right = (centroids_x + 3715 + flag)  # was 55
+                right = (centroids_x + 3695 + flag)  # was 3715
                 top = (centroids_y - 80)
                 bottom = (centroids_y + 2462)
             if (where_cell == 1):
@@ -283,8 +291,37 @@ if excel_or_nah == 1:
             except OSError:
                 pass
             counter = 0
-            if image_count != 1:
+            if ((image_count != 6) & (mode == 0)) or (mode == 1):
                 im = Image.open(os.path.join(path, "Cropped_Threshold.png"))  # was "Cropped_full_yeast.png"
+                sizeX, sizeY = im.size
+                im_sizeX = round(sizeX / 12)
+                im_sizeY = round(sizeY / 8)
+                for h in range(0, im.height, im_sizeY):
+                    nim = im.crop((0, h, im.width - 1, min(im.height, h + im_sizeY) - 1))
+                    nim.save(os.path.join(path, "Yeast_Row_Bin." + str(counter) + ".png"))
+                    counter += 1
+                anotherCounter = 0
+                for i in range(0, 8):
+                    columnImage = (os.path.join(path, "Yeast_Row_Bin.%d.png" % anotherCounter))
+                    Each_Image = Image.open(columnImage)
+                    sizeX2, sizeY2 = Each_Image.size
+                    Each_Image_sizeX = round(sizeX2 / 12)
+                    Each_Image_sizeY = round(sizeY2 / 8)
+                    anotherCounter += 1
+                    widthCounter1 = 0
+                    widthCounter2 = Each_Image_sizeX
+                    for w in range(0, 12):
+                        Wim = Each_Image.crop(
+                            (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX) - 1))
+                        Wim.save(os.path.join(path1, "Yeast_Cluster_Bin." + str(counter1) + ".png"))
+                        counter1 += 1
+                        widthCounter1 = widthCounter1 + Each_Image_sizeX
+                        widthCounter2 = widthCounter2 + Each_Image_sizeX
+                        # print(counter1)
+                im = Image.open(os.path.join(path, "Cropped_full_yeast.png"))  # was "Cropped_full_yeast.png"
+                counter = 0
+                anotherCounter = 0
+                counter1 = 0
                 sizeX, sizeY = im.size
                 im_sizeX = round(sizeX / 12)
                 im_sizeY = round(sizeY / 8)
@@ -297,43 +334,14 @@ if excel_or_nah == 1:
                     columnImage = (os.path.join(path, "Yeast_Row.%d.png" % anotherCounter))
                     Each_Image = Image.open(columnImage)
                     sizeX2, sizeY2 = Each_Image.size
-                    Each_Image_sizeX = float((sizeX2 / 12)-2)
-                    Each_Image_sizeY = float((sizeY2 / 8)+2)
+                    Each_Image_sizeX = round(sizeX2 / 12)
+                    Each_Image_sizeY = round(sizeY2 / 8)
                     anotherCounter += 1
                     widthCounter1 = 0
                     widthCounter2 = Each_Image_sizeX
                     for w in range(0, 12):
                         Wim = Each_Image.crop(
-                            (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX)))
-                        Wim.save(os.path.join(path1, "Yeast_Cluster_Bin." + str(counter1) + ".png"))
-                        counter1 += 1
-                        widthCounter1 = widthCounter1 + Each_Image_sizeX
-                        widthCounter2 = widthCounter2 + Each_Image_sizeX
-                        # print(counter1)
-                im = Image.open(os.path.join(path, "Cropped_full_yeast.png"))  # was "Cropped_full_yeast.png"
-                counter = 0
-                anotherCounter = 0
-                counter1 = 0
-                sizeX, sizeY = im.size
-                im_sizeX = round(sizeX / 12)
-                im_sizeY = round(sizeY / 8)
-                for h in range(0, im.height, im_sizeY):
-                    nim = im.crop((0, h, im.width - 1, min(im.height, h + im_sizeY)))
-                    nim.save(os.path.join(path, "Yeast_Row." + str(counter) + ".png"))
-                    counter += 1
-                anotherCounter = 0
-                for i in range(0, 8):
-                    columnImage = (os.path.join(path, "Yeast_Row.%d.png" % anotherCounter))
-                    Each_Image = Image.open(columnImage)
-                    sizeX2, sizeY2 = Each_Image.size
-                    Each_Image_sizeX = float((sizeX2 / 12)-2)
-                    Each_Image_sizeY = float((sizeY2 / 8)+2) #cause the far x is a bit to big and hard to get perfect
-                    anotherCounter += 1
-                    widthCounter1 = 0
-                    widthCounter2 = Each_Image_sizeX
-                    for w in range(0, 12):
-                        Wim = Each_Image.crop(
-                            (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX)))
+                            (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX) - 1))
                         Wim.save(os.path.join(path2, "Yeast_Cluster." + str(counter1) + ".png"))
                         counter1 += 1
                         widthCounter1 = widthCounter1 + Each_Image_sizeX
@@ -346,7 +354,7 @@ if excel_or_nah == 1:
                     im_sizeX = round(sizeX / 2)
                     im_sizeY = round(sizeY / 2)
                     for h in range(0, im.height, im_sizeY):
-                        nim = im.crop((0, h, im.width - 1, min(im.height, h + im_sizeY)))
+                        nim = im.crop((0, h, im.width - 1, min(im.height, h + im_sizeY) - 1))
                         nim.save(os.path.join(path, "ROW_SMALL." + str(row_counter_for_save) + ".png"))
                         row_counter_for_save += 1
                         if (h >= im_sizeY):
@@ -362,7 +370,7 @@ if excel_or_nah == 1:
                         widthCounter2 = Each_Image_sizeX
                         for w in range(0, 2):
                             Wim = Each_Image.crop(
-                                (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX)))
+                                (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX) - 1))
                             Wim.save(os.path.join(path3, "SMALL_CELL." + str(counter3) + ".png"))
                             counter3 += 1
                             widthCounter1 = widthCounter1 + Each_Image_sizeX
@@ -374,7 +382,7 @@ if excel_or_nah == 1:
                     im_sizeX = round(sizeX / 2)
                     im_sizeY = round(sizeY / 2)
                     for h in range(0, im.height, im_sizeY):
-                        nim = im.crop((0, h, im.width - 1, min(im.height, h + im_sizeY)))
+                        nim = im.crop((0, h, im.width - 1, min(im.height, h + im_sizeY) - 1))
                         nim.save(os.path.join(path, "ROW_SMALL." + str(row_counter_for_save) + ".png"))
                         row_counter_for_save += 1
                         if (h >= im_sizeY):
@@ -390,24 +398,26 @@ if excel_or_nah == 1:
                         widthCounter2 = Each_Image_sizeX
                         for w in range(0, 2):
                             Wim = Each_Image.crop(
-                                (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX)))
+                                (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX) - 1))
                             Wim.save(os.path.join(path4, "SMALL_CELL." + str(counter3) + ".png"))
                             counter3 += 1
                             widthCounter1 = widthCounter1 + Each_Image_sizeX
                             widthCounter2 = widthCounter2 + Each_Image_sizeX
+            #print("end of cluster maker")
                     # cheating rn to do the 96 well
-            if(image_counter == 1):
+
+            if ((image_count == 6) & (mode == 0)):
                 im = Image.open(os.path.join(path, "Cropped_Threshold.png"))  # was "Cropped_full_yeast.png"
                 sizeX, sizeY = im.size
                 im_sizeX = round(sizeX / 12)
                 im_sizeY = round(sizeY / 8)
                 for h in range(0, im.height, im_sizeY):
-                    nim = im.crop((0, h, im.width - 1, min(im.height, h + im_sizeY)))
-                    nim.save(os.path.join(path, "Yeast_Row." + str(counter) + ".png"))
+                    nim = im.crop((0, h, im.width - 1, min(im.height, h + im_sizeY) - 1))
+                    nim.save(os.path.join(path, "Yeast_Row_Bin." + str(counter) + ".png"))
                     counter += 1
                 anotherCounter = 0
                 for i in range(0, 8):
-                    columnImage = (os.path.join(path, "Yeast_Row.%d.png" % anotherCounter))
+                    columnImage = (os.path.join(path, "Yeast_Row_Bin.%d.png" % anotherCounter))
                     Each_Image = Image.open(columnImage)
                     sizeX2, sizeY2 = Each_Image.size
                     Each_Image_sizeX = round(sizeX2 / 12)
@@ -417,7 +427,7 @@ if excel_or_nah == 1:
                     widthCounter2 = Each_Image_sizeX
                     for w in range(0, 12):
                         Wim = Each_Image.crop(
-                            (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX)))
+                            (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX) - 1))
                         Wim.save(os.path.join(path1, "Yeast_Cluster_Bin." + str(counter1) + ".png"))
                         counter1 += 1
                         widthCounter1 = widthCounter1 + Each_Image_sizeX
@@ -431,7 +441,7 @@ if excel_or_nah == 1:
                 im_sizeX = round(sizeX / 12)
                 im_sizeY = round(sizeY / 8)
                 for h in range(0, im.height, im_sizeY):
-                    nim = im.crop((0, h, im.width - 1, min(im.height, h + im_sizeY)))
+                    nim = im.crop((0, h, im.width - 1, min(im.height, h + im_sizeY) - 1))
                     nim.save(os.path.join(path, "Yeast_Row." + str(counter) + ".png"))
                     counter += 1
                 anotherCounter = 0
@@ -446,7 +456,7 @@ if excel_or_nah == 1:
                     widthCounter2 = Each_Image_sizeX
                     for w in range(0, 12):
                         Wim = Each_Image.crop(
-                            (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX)))
+                            (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX) - 1))
                         Wim.save(os.path.join(path2, "Yeast_Cluster." + str(counter1) + ".png"))
                         counter1 += 1
                         widthCounter1 = widthCounter1 + Each_Image_sizeX
@@ -459,7 +469,7 @@ if excel_or_nah == 1:
                 im_sizeX = round(sizeX / 12)
                 im_sizeY = round(sizeY / 8)
                 for h in range(0, im.height, im_sizeY):
-                    nim = im.crop((0, h, im.width - 1, min(im.height, h + im_sizeY)))
+                    nim = im.crop((0, h, im.width - 1, min(im.height, h + im_sizeY) - 1))
                     nim.save(os.path.join(path, "Yeast_Row." + str(counter) + ".png"))
                     counter += 1
                 anotherCounter = 0
@@ -474,11 +484,12 @@ if excel_or_nah == 1:
                     widthCounter2 = Each_Image_sizeX
                     for w in range(0, 12):
                         Wim = Each_Image.crop(
-                            (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX)))
+                            (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX) - 1))
                         Wim.save(os.path.join(path2, "Yeast_Cluster." + str(counter1) + ".png"))
                         counter1 += 1
                         widthCounter1 = widthCounter1 + Each_Image_sizeX
                         widthCounter2 = widthCounter2 + Each_Image_sizeX
+
 
         # runs CC and is looking for small cells returns stats
         def connected_comps_for_liz(counter, flag):
@@ -959,15 +970,22 @@ if excel_or_nah == 1:
 
 
         # sends data to excel
-        def excel_writer_liz(base_arr, platename_arr, size, color, dire, red):
-            #print(len(red))
-            #print(len(color))
-            new_df = pd.DataFrame(
-                {'Image processed': (base_arr), 'Cluster': (platename_arr),
-                 'Size': (size), 'color': (color), 'red': (red)})
-            os.chdir(dire)
-            Excel_name = "A_test.xlsx"
-            new_df.to_excel(Excel_name)
+        def excel_writer_liz(base_arr, platename_arr, size, color, dire, red, TF):
+            if(TF == 1):
+                #print(len(red))
+                #print(len(color))
+                new_df = pd.DataFrame(
+                    {'Image processed': (base_arr), 'Cluster': (platename_arr),
+                     'Size': (size), 'color': (color), 'red': (red)})
+                os.chdir(dire)
+                Excel_name = "A_test.xlsx"
+                new_df.to_excel(Excel_name)
+                return 0
+            if(TF == 0):
+                new_df = pd.DataFrame(
+                    {'Image processed': (base_arr), 'Cluster': (platename_arr),
+                     'Size': (size), 'color': (color), 'red': (red)})
+                return new_df
 
 
         # sends data to excel
@@ -986,9 +1004,10 @@ if excel_or_nah == 1:
             new_df.to_excel(Excel_name)
 
 
+
         ##MAIN##
         toomanycounter = 1
-        anothercounter = 1
+        anothercounter = (str(1).zfill(2))
         color_counter = 0
         plate_size = []
         plate_color = []
@@ -1008,25 +1027,32 @@ if excel_or_nah == 1:
             image_counter = image_counter + 1
             #will need to be changed when not testing
 
+
             if image_counter != 6:
                 flag = 0
                 plate_number = ((4 * image_counter)-3)
+                plate_number = (str(1).zfill(2))
                 for c in range(0, 384):
                     # print(c)
                     base_arr.append(base)
                     char = chr(toomanycounter + 64)
-                    plate_name = ("U%d-%c%d" % (plate_number, char, anothercounter))
-                    platename_arr.append(plate_name)
-                    plate_number = plate_number + 1
+                    plate_name = ("U%s-%c%s" % (plate_number, char, anothercounter))
+                    plate_number = int(plate_number) + 1
                     if plate_number > (4 * image_counter):
                         plate_number = (plate_number - 4)
+                    plate_number = (str(plate_number).zfill(2))
                     temp = temp + 1
                     if temp > 4:
-                        anothercounter = anothercounter + 1
+                        anothercounter = int(anothercounter) + 1
                         temp = 1
-                    if anothercounter > 12:
+                    if int(anothercounter) > 12:
                         anothercounter = 1
                         toomanycounter = toomanycounter + 1
+                    anothercounter = (str(anothercounter).zfill(2))
+                    platename_arr.append(plate_name)
+                    if(TF == 0):
+                        test = df.loc[plate_name]
+                        in_order = in_order.append(test)
                     #print(plate_name)
                     returned_size = connected_comps_for_liz(c, flag)
                     cc.append(returned_size)
@@ -1048,18 +1074,25 @@ if excel_or_nah == 1:
 
             if(image_counter == 6):
                 flag = 1
-                for c in range(0,96):
+                for c in range(0, 96):
                     # print(c)
-                    plate_number = 21
+                    plate_number = (str(21).zfill(2))
                     base_arr.append(base)
                     char = chr(toomanycounter + 64)
-                    plate_name = ("U%d-%c%d" % (plate_number, char, anothercounter))
+                    plate_name = ("U%s-%c%s" % (plate_number, char, anothercounter))
                     platename_arr.append(plate_name)
-                    anothercounter = anothercounter + 1
+                    anothercounter = int(anothercounter) + 1
                     if anothercounter > 12:
                         anothercounter = 1
                         toomanycounter = toomanycounter + 1
+                    anothercounter = (str(anothercounter).zfill(2))
                     #print(plate_name)
+                    if(plate_name == 'U21-D02'):
+                        TF = 1
+                    if (TF == 0):
+                        test = df.loc[plate_name]
+                        in_order = in_order.append(test)
+                        TF_was = 0
                     returned_size = connected_comps_for_liz(c, flag)
                     cc.append(returned_size)
                     total_size_array.append(returned_size)
@@ -1204,7 +1237,24 @@ if excel_or_nah == 1:
         # size_pos = size_hit(temp_array)
         # color_pos = color_hit(temp_color)
         # pos_size = pos_hit(size_pos, color_pos)
-        excel_writer_liz(base_arr, platename_arr, total_size_array, total_color_array, folder, red_array)
+        if(TF_was == 1):
+            new_df = excel_writer_liz(base_arr, platename_arr, total_size_array,
+                                      total_color_array, folder, red_array, TF_was)
+        if(TF_was == 0):
+            os.chdir(folder)
+            new_df = excel_writer_liz(base_arr, platename_arr, total_size_array,
+                                      total_color_array, folder, red_array, TF_was)
+
+            Excel_name = "class.xlsx"
+            name = "lib.xlsx"
+            new_df.to_excel(Excel_name)
+            in_order.to_excel(name)
+            df1 = pd.read_excel("class.xlsx", index_col=0)
+            df2 = pd.read_excel("lib.xlsx", index_col=0).reset_index()
+
+            new_df = pd.concat([df1, df2], axis=1, join="inner")
+            new_df.to_excel("results.xlsx")
+
     if int(mode) == 1:
         pos_size = size_hit(temp_array)
         excel_writer_chris(base_arr, platename_arr, Q1_size, Q2_size, Q3_size, Q4_size,
