@@ -256,7 +256,7 @@ if excel_or_nah == 1:
                                                   -1)  # For liz's pictures 241
             cv2.imwrite(os.path.join(path, "blue_test.png"), Gaussian_blue)
             blur_image = pcv.median_blur(Gaussian_blue, 10)
-            heavy_fill_blue = pcv.fill(blur_image, 400)  # value 400
+            heavy_fill_blue = pcv.fill(blur_image, 1000)  # value 400
             hole_fill = pcv.fill_holes(heavy_fill_blue)
             cv2.imwrite(os.path.join(path, "Cropped_Threshold.png"), hole_fill)
 
@@ -707,7 +707,7 @@ if excel_or_nah == 1:
             color = (232, 161, 20)
             hit_counter = 1
             for i in range(0, (len(stats)), 1):
-                if (centroids[i][0] >= 30 and centroids[i][0] <= 110 and centroids[i][1] >= 40 and centroids[i][1] <= 140):
+                if (centroids[i][0] >= 30 and centroids[i][0] <= 110 and centroids[i][1] >= 40 and centroids[i][1] <= 100):
                     # print("%d is in 1" % i)
                     cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
                     centroid = int(centroids[i][0]), int(centroids[i][1])
@@ -719,7 +719,7 @@ if excel_or_nah == 1:
                 if (cell_counter1 == len(stats)):
                     cc_size_array.append(0)
             for i in range(0, (len(stats)), 1):
-                if (centroids[i][0] >= 180 and centroids[i][0] <= 270 and centroids[i][1] >= 40 and centroids[i][1] <= 140):
+                if (centroids[i][0] >= 200 and centroids[i][0] <= 270 and centroids[i][1] >= 40 and centroids[i][1] <= 100):
                     cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
                     centroid = int(centroids[i][0]), int(centroids[i][1])
                     cv2.putText(circle_me, "%d" % hit_counter, centroid, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
@@ -743,7 +743,7 @@ if excel_or_nah == 1:
                 if (cell_counter3 == len(stats)):
                     cc_size_array.append(0)
             for i in range(0, (len(stats)), 1):
-                if (centroids[i][0] >= 180 and centroids[i][0] <= 270 and centroids[i][1] >= 200 and centroids[i][
+                if (centroids[i][0] >= 200 and centroids[i][0] <= 270 and centroids[i][1] >= 200 and centroids[i][
                     1] <= 270):
                     cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
                     centroid = int(centroids[i][0]), int(centroids[i][1])
@@ -757,13 +757,7 @@ if excel_or_nah == 1:
                     cc_size_array.append(0)
             cv2.imwrite("centroid test.png", circle_me)
 
-            """
-            if (len(cell_counter) < 4):
-                # print("too few decteted on %d" % counter)
-                # print((len(stats)))
-                for i in range((len(stats)), 5, 1):
-                    cc_size_array.append(0)
-            """
+
             while(len(cc_size_array) >= 5):
                 print(cc_size_array)
                 print("problem on cell %d" % counter)
@@ -1178,18 +1172,21 @@ if excel_or_nah == 1:
     # one is size and looking for large
         if int(mode) == 1:
             image_counter = image_counter + 1
+            plate_number = (str(21).zfill(2))
             for c in range(0, 96):
                 base_arr.append(base)
                 char = chr(toomanycounter + 64)
-                plate_name = ("U%d-%c%d" % (image_counter, char, anothercounter))
+                plate_name = ("U%s-%c%s" % (image_counter, char, anothercounter))
                 platename_arr.append(plate_name)
-                returned_size = connected_comps_for_Chris(c)
-                # print(returned_size)
-                returned_color = colorful_writer(color_counter)
-                anothercounter = anothercounter + 1
+                platename_arr.append(plate_name)
+                anothercounter = int(anothercounter) + 1
                 if anothercounter > 12:
                     anothercounter = 1
                     toomanycounter = toomanycounter + 1
+                anothercounter = (str(anothercounter).zfill(2))
+                returned_size = connected_comps_for_Chris(c)
+                # print(returned_size)
+                returned_color = colorful_writer(color_counter)
                 color_counter = returned_color[3]
                 cc = []
                 cc = returned_size[0]
