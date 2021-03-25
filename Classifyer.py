@@ -312,7 +312,7 @@ if excel_or_nah == 1:
                     widthCounter2 = Each_Image_sizeX
                     for w in range(0, 12):
                         Wim = Each_Image.crop(
-                            (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX) - 1))
+                            (widthCounter1, w, widthCounter2, round(Each_Image.height, w + Each_Image_sizeX)))
                         Wim.save(os.path.join(path1, "Yeast_Cluster_Bin." + str(counter1) + ".png"))
                         counter1 += 1
                         widthCounter1 = widthCounter1 + Each_Image_sizeX
@@ -341,7 +341,7 @@ if excel_or_nah == 1:
                     widthCounter2 = Each_Image_sizeX
                     for w in range(0, 12):
                         Wim = Each_Image.crop(
-                            (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX) - 1))
+                            (widthCounter1, w, widthCounter2, round(Each_Image.height, w + Each_Image_sizeX)))
                         Wim.save(os.path.join(path2, "Yeast_Cluster." + str(counter1) + ".png"))
                         counter1 += 1
                         widthCounter1 = widthCounter1 + Each_Image_sizeX
@@ -427,7 +427,7 @@ if excel_or_nah == 1:
                     widthCounter2 = Each_Image_sizeX
                     for w in range(0, 12):
                         Wim = Each_Image.crop(
-                            (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX) - 1))
+                            (widthCounter1, w, widthCounter2, round(Each_Image.height, w + Each_Image_sizeX)))
                         Wim.save(os.path.join(path1, "Yeast_Cluster_Bin." + str(counter1) + ".png"))
                         counter1 += 1
                         widthCounter1 = widthCounter1 + Each_Image_sizeX
@@ -456,7 +456,7 @@ if excel_or_nah == 1:
                     widthCounter2 = Each_Image_sizeX
                     for w in range(0, 12):
                         Wim = Each_Image.crop(
-                            (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX) - 1))
+                            (widthCounter1, w, widthCounter2, round(Each_Image.height, w + Each_Image_sizeX)))
                         Wim.save(os.path.join(path2, "Yeast_Cluster." + str(counter1) + ".png"))
                         counter1 += 1
                         widthCounter1 = widthCounter1 + Each_Image_sizeX
@@ -484,7 +484,7 @@ if excel_or_nah == 1:
                     widthCounter2 = Each_Image_sizeX
                     for w in range(0, 12):
                         Wim = Each_Image.crop(
-                            (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX) - 1))
+                            (widthCounter1, w, widthCounter2, round(Each_Image.height, w + Each_Image_sizeX)))
                         Wim.save(os.path.join(path2, "Yeast_Cluster." + str(counter1) + ".png"))
                         counter1 += 1
                         widthCounter1 = widthCounter1 + Each_Image_sizeX
@@ -707,7 +707,7 @@ if excel_or_nah == 1:
             color = (232, 161, 20)
             hit_counter = 1
             for i in range(0, (len(stats)), 1):
-                if (centroids[i][0] >= 30 and centroids[i][0] <= 110 and centroids[i][1] >= 40 and centroids[i][1] <= 100):
+                if (centroids[i][0] >= 30 and centroids[i][0] <= 120 and centroids[i][1] >= 40 and centroids[i][1] <= 100):
                     # print("%d is in 1" % i)
                     cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
                     centroid = int(centroids[i][0]), int(centroids[i][1])
@@ -731,7 +731,7 @@ if excel_or_nah == 1:
                 if (cell_counter2 == len(stats)):
                     cc_size_array.append(0)
             for i in range(0, (len(stats)), 1):
-                if (centroids[i][0] >= 30 and centroids[i][0] <= 110 and centroids[i][1] >= 200 and centroids[i][1] <= 270):
+                if (centroids[i][0] >= 30 and centroids[i][0] <= 120 and centroids[i][1] >= 200 and centroids[i][1] <= 270):
                     cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
                     centroid = int(centroids[i][0]), int(centroids[i][1])
                     cv2.putText(circle_me, "%d" % hit_counter, centroid, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
@@ -768,24 +768,6 @@ if excel_or_nah == 1:
                 removed = (int(removed) - 1)
                 del cc_size_array[(int(removed))]
 
-            if (len(cc_size_array) >= 5):
-                print(cc_size_array)
-                print("problem on cell %d" % counter)
-                image = Image.open("centroid test.png")
-                image.show()
-                removed = input("Enter value: ")
-                image.close()
-                removed = (int(removed) - 2)
-                del cc_size_array[(int(removed))]
-            if (len(cc_size_array) >= 5):
-                print(cc_size_array)
-                print("problem on cell %d" % counter)
-                image = Image.open("centroid test.png")
-                image.show()
-                removed = input("Enter value: ")
-                image.close()
-                removed = (int(removed) - 3)
-                del cc_size_array[(int(removed))]
 
             # total_size_array = total_size_array + cc_size_array
             # print("size data")
