@@ -1180,7 +1180,6 @@ if excel_or_nah == 1:
                 char = chr(toomanycounter + 64)
                 plate_name = ("U%s-%c%s" % (image_counter, char, anothercounter))
                 platename_arr.append(plate_name)
-                platename_arr.append(plate_name)
                 anothercounter = int(anothercounter) + 1
                 if anothercounter > 12:
                     anothercounter = 1
