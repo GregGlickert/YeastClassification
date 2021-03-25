@@ -758,9 +758,10 @@ if excel_or_nah == 1:
             cv2.imwrite("centroid test.png", circle_me)
 
 
-            if (len(cc_size_array) >= 5):
+            while (len(cc_size_array) >= 5):
                 print(cc_size_array)
                 print("problem on cell %d" % counter)
+                print("REMOVE THE LARGER NUMBER FIRST IF MULTIPLE")
                 image = Image.open("centroid test.png")
                 image.show()
                 removed = input("Enter value: ")
