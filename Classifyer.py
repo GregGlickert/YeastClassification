@@ -719,7 +719,7 @@ if excel_or_nah == 1:
                 if (cell_counter1 == len(stats)):
                     cc_size_array.append(0)
             for i in range(0, (len(stats)), 1):
-                if (centroids[i][0] >= 200 and centroids[i][0] <= 270 and centroids[i][1] >= 40 and centroids[i][1] <= 100):
+                if (centroids[i][0] >= 200 and centroids[i][0] <= 280 and centroids[i][1] >= 40 and centroids[i][1] <= 100):
                     cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
                     centroid = int(centroids[i][0]), int(centroids[i][1])
                     cv2.putText(circle_me, "%d" % hit_counter, centroid, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
@@ -731,7 +731,7 @@ if excel_or_nah == 1:
                 if (cell_counter2 == len(stats)):
                     cc_size_array.append(0)
             for i in range(0, (len(stats)), 1):
-                if (centroids[i][0] >= 30 and centroids[i][0] <= 120 and centroids[i][1] >= 200 and centroids[i][1] <= 270):
+                if (centroids[i][0] >= 30 and centroids[i][0] <= 120 and centroids[i][1] >= 200 and centroids[i][1] <= 280):
                     cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
                     centroid = int(centroids[i][0]), int(centroids[i][1])
                     cv2.putText(circle_me, "%d" % hit_counter, centroid, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
@@ -743,8 +743,8 @@ if excel_or_nah == 1:
                 if (cell_counter3 == len(stats)):
                     cc_size_array.append(0)
             for i in range(0, (len(stats)), 1):
-                if (centroids[i][0] >= 200 and centroids[i][0] <= 270 and centroids[i][1] >= 200 and centroids[i][1]
-                        <= 270):
+                if (centroids[i][0] >= 200 and centroids[i][0] <= 280 and centroids[i][1] >= 200 and centroids[i][1]
+                        <= 280):
                     cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
                     centroid = int(centroids[i][0]), int(centroids[i][1])
                     cv2.putText(circle_me, "%d" % hit_counter, centroid, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
