@@ -5,7 +5,7 @@ Run script and GUI should open (hopefully)
 Environment can be built from included yml\
 Will have a lot of not needed libraries but should still work\
 In the future will provide better yml file with less libraries\
-command - ```conda env create -f TEST_ENVIRONMENT.yml```
+command - ```conda env create -f YeastBot.yml```
 ### Using PyPi (subject to change still)
 OpenCV // ```pip install opencv-python```
 
