@@ -12,6 +12,8 @@ import scipy.stats
 import easygui
 from tqdm import tqdm
 import xlrd
+import re
+from natsort import os_sorted
 """
 import shutil
 # import argparse
@@ -65,6 +67,17 @@ mod_color = []
 temp_color = []
 red_array = []
 
+def atoi(text):
+    return int(text) if text.isdigit() else text
+
+def natural_keys(text):
+    '''
+    alist.sort(key=natural_keys) sorts in human order
+    http://nedbatchelder.com/blog/200712/human_sorting.html
+    (See Toothy's implementation in the comments)
+    '''
+    return [ atoi(c) for c in re.split(r'(\d+)', text) ]
+
 image_counter = 0
 TF_was = 1
 #pcv.params.debug = "print"
@@ -103,7 +116,10 @@ if excel_or_nah == 1:
             in_order = pd.DataFrame(columns=df.columns)
     folder = easygui.diropenbox()
     # Loops over every image in the selected folder
-    imagePath = sorted(list(paths.list_images(folder)))
+    imagePath = (list(paths.list_images(folder)))
+    imagePath = os_sorted(imagePath)
+    print("does this order look right?")
+    print(imagePath)
     for i in tqdm(range(len(imagePath))):
         img = Image.open(imagePath[i])
         # img.show()
