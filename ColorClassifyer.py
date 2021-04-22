@@ -125,9 +125,11 @@ if excel_or_nah == 1:
                     img2[output == i + 1] = 255
             cv2.imwrite(os.path.join(path, "remove_20000.png"), img2)  # this can be made better to speed it up
             thresh_image = img2.astype(np.uint8)  # maybe crop to the roi below then do it
+            thresh_image = pcv.fill_holes(thresh_image)
+            cv2.imwrite("NEWTEST.jpg", thresh_image)
             id_objects, obj_hierarchy = pcv.find_objects(img=image, mask=thresh_image)
 
-            roi1, roi_hierarchy = pcv.roi.rectangle(img=image, x=(left + 380), y=700, h=100,
+            roi1, roi_hierarchy = pcv.roi.rectangle(img=image, x=(left + 380), y=750, h=175,
                                                     w=100)
             try:
                 where_cell = 0
