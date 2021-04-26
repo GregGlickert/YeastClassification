@@ -706,7 +706,8 @@ if excel_or_nah == 1:
             stdRoot = np.sqrt((rbStd ** 2) + (ybStd ** 2))
             meanRoot = np.sqrt((rbMean ** 2) + (ybMean ** 2))
             # derive the "colorfulness" metric and return it
-            return stdRoot + (0.3 * meanRoot)
+            temp = stdRoot + (0.3 * meanRoot)
+            return (100 - temp)
 
 
         # crops cluster into cells and feeds to image_colorfulness
