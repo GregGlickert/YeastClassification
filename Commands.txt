@@ -1,0 +1,22 @@
+Helpful commands to remember
+git remote -v
+    Will give you the name the remote
+    remote name is what is used when doing the git pull "remote" command with "remote" being replaced by the remote name
+
+git remote rename "current" "newname"
+    renames the remote name to something easier
+    replace "current" with the name of the remote right now
+    replace "newname" with the new name you would like for the remote
+
+git pull "origin"
+    command to update the scripts from the github repo
+    replace "origin" with the name of the remote
+
+https://github.com/GregGlickert/YeastClassification
+    link to the repo
+
+python ColorClassifyer.py
+    runs the color script
+
+python SizeClassifyer.py
+    runs the size script
