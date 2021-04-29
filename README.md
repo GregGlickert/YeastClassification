@@ -31,3 +31,5 @@ TQDM // ```pip install tqdm```
 
 XLRD // ```pip install XLRD```
 
+Natsort // ```pip install natsort```
+
