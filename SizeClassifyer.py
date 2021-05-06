@@ -61,7 +61,7 @@ if excel_or_nah == 1:
     TF = easygui.indexbox(msg='Would you like to append TF library', title='Yeast Classifier',
                           choices=("Yes", "No"))
     if(TF == 0):
-        df = pd.read_excel("TF.xlsx")
+        df = pd.read_excel("TF.xlsx").reset_index()
         in_order = df
         #df = df.set_index(['Clone location (plate-well)'])
         #in_order = pd.DataFrame(columns=df.columns)
@@ -640,8 +640,8 @@ if excel_or_nah == 1:
                      'Q1_size': (Q1_size), 'Q2_size': (Q2_size), 'Q3_size': (Q3_size),
                      'Q4_size': (Q4_size), 'Avg_size': (total_size_avg_array), 'Size_stdev': (total_size_std_array),
                      'Q1_Zscore': (Z1_size), 'Q2_Zscore': (Z2_size), 'Q3_Zscore': (Z3_size),
-                     'Q4_Zscore': (Z4_size), 'Avg_Zscore': (Z_avg), '# above threshold': (above_size_ther),
-                     'modifier': (mod_size), 'temp': (temp_array), 'hit': (pos_size)})
+                     'Q4_Zscore': (Z4_size), 'Avg_Zscore': (Z_avg), '# above size threshold': (above_size_ther),
+                     'Above Z-score threshold': (mod_size), 'temp': (temp_array), 'hit': (pos_size)})
                 os.chdir(dire)
                 Excel_name = "A_test.xlsx"
                 new_df.to_excel(Excel_name)
@@ -745,7 +745,7 @@ if excel_or_nah == 1:
         new_df.to_excel(Excel_name)
         in_order.to_excel(name)
         df1 = pd.read_excel("class.xlsx", index_col=0)
-        df2 = pd.read_excel("lib.xlsx", index_col=0).reset_index()
+        df2 = pd.read_excel("lib.xlsx", index_col=0)
 
         new_df = pd.concat([df1, df2], axis=1, join="inner")
         new_df.to_excel("results.xlsx")
