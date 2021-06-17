@@ -1,4 +1,5 @@
 import pandas as pd
+from pandasgui import show
 from tkinter import *
 from tkinter import messagebox as msg
 from pandastable import Table

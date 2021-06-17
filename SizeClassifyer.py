@@ -96,52 +96,50 @@ if excel_or_nah == 1:
             except OSError:
                 pass
             image = cv2.imread(imagePath)
-            blue_image = pcv.rgb2gray_lab(image, 'l')
-            Gaussian_blue = cv2.adaptiveThreshold(blue_image, 255,
-                                                  cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 981,
-                                                  -1)  # 241 is good 981
-            cv2.imwrite(os.path.join(path, "blue_test.png"), Gaussian_blue)
-            fill = pcv.fill_holes(Gaussian_blue)
-            fill_again = pcv.fill(fill, 100000)
 
-            id_objects, obj_hierarchy = pcv.find_objects(img=image,
-                                                         mask=fill_again)  # lazy way to findContours and draw them
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            cv2.imwrite(os.path.join(path, "gray.png"), gray)
 
-            roi1, roi_hierarchy = pcv.roi.rectangle(img=image, x=3000, y=1000, h=200, w=300)
+            ret, thres = cv2.threshold(gray,137,255,cv2.THRESH_BINARY) #127 137
 
-            roi_objects, hierarchy3, kept_mask, obj_area = pcv.roi_objects(img=image, roi_contour=roi1,
-                                                                           roi_hierarchy=roi_hierarchy,
-                                                                           object_contour=id_objects,
-                                                                           obj_hierarchy=obj_hierarchy,
-                                                                           roi_type='partial')
-            cv2.imwrite(os.path.join(path, "plate_mask.png"), kept_mask)
+            cv2.imwrite(os.path.join(path, 'Wholepic.png'), thres)
 
-            mask = cv2.imread(os.path.join(path, "plate_mask.png"))
-            result = image * (mask.astype(image.dtype))
-            result = cv2.bitwise_not(result)
-            cv2.imwrite(os.path.join(path, "AutoCrop.png"), result)
+            fill = pcv.fill(thres, 100000)
+            cv2.imwrite(os.path.join(path, "noiseReduced.png"), fill)
 
-            output = cv2.connectedComponentsWithStats(kept_mask, connectivity=8)
-            stats = output[2]
-            left = (stats[1, cv2.CC_STAT_LEFT])
-            # print(stats[1, cv2.CC_STAT_TOP])
-            # print(stats[1, cv2.CC_STAT_HEIGHT])
-            # exit(2)
 
-            L, a, b = cv2.split(result)
-            # cv2.imwrite("gray_scale.png", L)
-            plate_threshold = cv2.adaptiveThreshold(b, 255,
-                                                    cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 87,
-                                                    -1)  # 867 is good 241
-            cv2.imwrite(os.path.join(path, "plate_threshold.png"), plate_threshold)
+            im2, contours, hierarchy = cv2.findContours(fill,
+                cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-            fill_again2 = pcv.fill(plate_threshold, 1000)
+            test = []
+            for c in contours:
+                peri = cv2.arcLength(c, True)
+                test.append(peri)
 
-            cv2.imwrite(os.path.join(path, "fill_test.png"), fill_again2)
-            # fill = pcv.fill_holes(fill_again2)
-            # cv2.imwrite(os.path.join(path, "fill_test2.png"), fill)
-            blur_image = pcv.median_blur(fill_again2, 10)
-            nb_components, output, stats, centroids = cv2.connectedComponentsWithStats(blur_image, connectivity=8)
+            index_max = np.argmax(test)
+            #print(index_max)
+            #print(test[index_max])
+            x,y,w,h = cv2.boundingRect(contours[index_max])
+            c = max(contours, key = cv2.contourArea)
+            x,y,w,h = cv2.boundingRect(c)
+
+
+            # draw the biggest contour (c) in green
+            #cv2.rectangle(image,(x,y),(x+w,y+h),(0,255,0),5)
+
+            image = image[y:y+h, x:x+w]
+
+            cv2.imwrite(os.path.join(path, "cropped.png"), image)
+            L, a, b = cv2.split(image)  # can do l a or b
+            thres = cv2.adaptiveThreshold(b, 255,
+                                          cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 255,-1)  # For liz's pictures 241
+            fill = pcv.fill(thres, 1000)
+            #blur = cv2.blur(fill, (15, 15), 0)
+
+            fill_hole = cv2.morphologyEx(fill, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_RECT, (21, 21)), iterations=2)
+
+            nb_components, output, stats, centroids = cv2.connectedComponentsWithStats(fill_hole, connectivity=8)
+            new_centroids = []
             sizes = stats[1:, -1]
             nb_components = nb_components - 1
             min_size = 20000
@@ -149,82 +147,30 @@ if excel_or_nah == 1:
             for i in range(0, nb_components):
                 if sizes[i] <= min_size:
                     img2[output == i + 1] = 255
-            cv2.imwrite(os.path.join(path, "remove_20000.png"), img2)  # this can be made better to speed it up
-            thresh_image = img2.astype(np.uint8)  # maybe crop to the roi below then do it
-            id_objects, obj_hierarchy = pcv.find_objects(img=image, mask=thresh_image)
+                    new_centroids.append(centroids[i])
+            cv2.imwrite(os.path.join(path, "filter.png"), img2)
 
-            roi1, roi_hierarchy = pcv.roi.rectangle(img=image, x=(left + 380), y=700, h=100,
-                                                    w=100)
-            try:
-                where_cell = 0
-                roi_objects, hierarchy3, kept_mask, obj_area = pcv.roi_objects(img=image, roi_contour=roi1,
-                                                                               roi_hierarchy=roi_hierarchy,
-                                                                               object_contour=id_objects,
-                                                                               obj_hierarchy=obj_hierarchy,
-                                                                               roi_type='partial')
+            y = []
+            x = []
+            for i in range(len(new_centroids)):
+                y.append(new_centroids[i][1])
+                x.append(new_centroids[i][0])
 
-                cv2.imwrite(os.path.join(path, "test_mask.png"), kept_mask)
-                mask = cv2.imread(os.path.join(path, "test_mask.png"))
-                result = image * (mask.astype(image.dtype))
-                result = cv2.bitwise_not(result)
-                cv2.imwrite(os.path.join(path, "TEST.png"), result)
+            XARRAY = sorted(x)
+            YARRAY = sorted(y)
+            smallX = int(XARRAY[6]) - 60
+            bigX = int(XARRAY[len(XARRAY) - 6]) + 60
+            smallY = int(YARRAY[6]) - 60
+            bigY = int(YARRAY[len(YARRAY) - 6]) + 60
 
-                output = cv2.connectedComponentsWithStats(kept_mask, connectivity=8)
-                stats = output[2]
-                centroids = output[3]
-                centroids_x = (int(centroids[1][0]))
-                centroids_y = (int(centroids[1][1]))
-            except:
-                where_cell = 1
-                print("did this work?")
-                roi1, roi_hierarchy = pcv.roi.rectangle(img=image, x=(left + 380), y=3200, h=100, w=100)
-                roi_objects, hierarchy3, kept_mask, obj_area = pcv.roi_objects(img=image, roi_contour=roi1,
-                                                                               roi_hierarchy=roi_hierarchy,
-                                                                               object_contour=id_objects,
-                                                                               obj_hierarchy=obj_hierarchy,
-                                                                               roi_type='partial')
-                cv2.imwrite(os.path.join(path, "test_mask.png"), kept_mask)
-                mask = cv2.imread(os.path.join(path, "test_mask.png"))
-                result = image * (mask.astype(image.dtype))
-                result = cv2.bitwise_not(result)
-                cv2.imwrite(os.path.join(path, "TEST.png"), result)
+            #print(smallX, smallY, bigX, bigY)
 
-                output = cv2.connectedComponentsWithStats(kept_mask, connectivity=8)
-                stats = output[2]
-                centroids = output[3]
-                centroids_x = (int(centroids[1][0]))
-                centroids_y = (int(centroids[1][1]))
-            flag = 0
-
-            # print(stats[1, cv2.CC_STAT_AREA])
-            if ((stats[1, cv2.CC_STAT_AREA]) > 4000):
-                flag = 30
-            # print(centroids_x)
-            # print(centroids_y)
-
-            # print(centroids)
-            if (where_cell == 0):
-                left = (centroids_x - 70)
-                right = (centroids_x + 3695 + flag)  # was 3715
-                top = (centroids_y - 80)
-                bottom = (centroids_y + 2462)
-            if (where_cell == 1):
-                left = (centroids_x - 70)
-                right = (centroids_x + 3715 + flag)
-                top = (centroids_y - 2480)
-                bottom = (centroids_y + 62)
-
-            # print(top)
-            # print(bottom)
-            image = Image.open(imagePath)
-            img_crop = image.crop((left, top, right, bottom))
-            img_crop.save(os.path.join(path, "CROPPED.png"))
-            img_crop = img.crop((left, top, right, bottom))
-            # img_crop.show()
-            img_crop.save(os.path.join(path, 'Cropped_full_yeast.png'))
+            image = cv2.imread(os.path.join(path,"cropped.png"))
+            image = image[smallY:bigY, smallX:bigX]
+            cv2.imwrite(os.path.join(path, "Cropped_full_yeast.png"), image)
             circle_me = cv2.imread(os.path.join(path, "Cropped_full_yeast.png"))
             cropped_img = cv2.imread(
-                os.path.join(path, "Cropped_full_yeast.png"))  # changed from Yeast_Cluster.%d.png  %counter
+                os.path.join(path, "Cropped_full_yeast.png"))
             L, a, b = cv2.split(cropped_img)  # can do l a or b
             Gaussian_blue = cv2.adaptiveThreshold(b, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 241,
                                                   -1)  # For liz's pictures 241
@@ -237,8 +183,6 @@ if excel_or_nah == 1:
 
         # crops the plate into the clusters
         def cluster_maker(image_count):
-            counter3 = 0
-            counter1 = 0
             dire = folder  # used to be os.getcwd()
             path = dire + '/Classifyer_dump'
             path1 = dire + '/Yeast_cluster_inv'
@@ -265,205 +209,46 @@ if excel_or_nah == 1:
                 os.makedirs(path4)
             except OSError:
                 pass
-            counter = 0
-            if (image_count != 6):
-                im = Image.open(os.path.join(path, "Cropped_Threshold.png"))  # was "Cropped_full_yeast.png"
-                sizeX, sizeY = im.size
-                im_sizeX = round(sizeX / 12)
-                im_sizeY = round(sizeY / 8)
-                for h in range(0, im.height, im_sizeY):
-                    nim = im.crop((0, h, im.width - 1, min(im.height, h + im_sizeY) - 1))
-                    nim.save(os.path.join(path, "Yeast_Row_Bin." + str(counter) + ".png"))
-                    counter += 1
-                anotherCounter = 0
-                for i in range(0, 8):
-                    columnImage = (os.path.join(path, "Yeast_Row_Bin.%d.png" % anotherCounter))
-                    Each_Image = Image.open(columnImage)
-                    sizeX2, sizeY2 = Each_Image.size
-                    Each_Image_sizeX = round(sizeX2 / 12)
-                    Each_Image_sizeY = round(sizeY2 / 8)
-                    anotherCounter += 1
-                    widthCounter1 = 0
-                    widthCounter2 = Each_Image_sizeX
-                    for w in range(0, 12):
-                        Wim = Each_Image.crop(
-                            (widthCounter1, w, widthCounter2, round(Each_Image.height, w + Each_Image_sizeX)))
-                        Wim.save(os.path.join(path1, "Yeast_Cluster_Bin." + str(counter1) + ".png"))
-                        counter1 += 1
-                        widthCounter1 = widthCounter1 + Each_Image_sizeX
-                        widthCounter2 = widthCounter2 + Each_Image_sizeX
-                        # print(counter1)
-                im = Image.open(os.path.join(path, "Cropped_full_yeast.png"))  # was "Cropped_full_yeast.png"
-                counter = 0
-                anotherCounter = 0
-                counter1 = 0
-                sizeX, sizeY = im.size
-                im_sizeX = round(sizeX / 12)
-                im_sizeY = round(sizeY / 8)
-                for h in range(0, im.height, im_sizeY):
-                    nim = im.crop((0, h, im.width - 1, min(im.height, h + im_sizeY) - 1))
-                    nim.save(os.path.join(path, "Yeast_Row." + str(counter) + ".png"))
-                    counter += 1
-                anotherCounter = 0
-                for i in range(0, 8):
-                    columnImage = (os.path.join(path, "Yeast_Row.%d.png" % anotherCounter))
-                    Each_Image = Image.open(columnImage)
-                    sizeX2, sizeY2 = Each_Image.size
-                    Each_Image_sizeX = round(sizeX2 / 12)
-                    Each_Image_sizeY = round(sizeY2 / 8)
-                    anotherCounter += 1
-                    widthCounter1 = 0
-                    widthCounter2 = Each_Image_sizeX
-                    for w in range(0, 12):
-                        Wim = Each_Image.crop(
-                            (widthCounter1, w, widthCounter2, round(Each_Image.height, w + Each_Image_sizeX)))
-                        Wim.save(os.path.join(path2, "Yeast_Cluster." + str(counter1) + ".png"))
-                        counter1 += 1
-                        widthCounter1 = widthCounter1 + Each_Image_sizeX
-                        widthCounter2 = widthCounter2 + Each_Image_sizeX
-                row_counter_for_save = 0
-                row_counter_for_open = 0
-                for i in range(0, 96):
-                    im = Image.open(os.path.join(path2, "Yeast_Cluster.%d.png" % i))
-                    sizeX, sizeY = im.size
-                    im_sizeX = round(sizeX / 2)
-                    im_sizeY = round(sizeY / 2)
-                    for h in range(0, im.height, im_sizeY):
-                        nim = im.crop((0, h, im.width - 1, min(im.height, h + im_sizeY) - 1))
-                        nim.save(os.path.join(path, "ROW_SMALL." + str(row_counter_for_save) + ".png"))
-                        row_counter_for_save += 1
-                        if (h >= im_sizeY):
-                            break
-                    for i in range(0, 2):
-                        rowImage = (os.path.join(path, "ROW_SMALL.%d.png" % row_counter_for_open))
-                        Each_Image = Image.open(rowImage)
-                        sizeX2, sizeY2 = Each_Image.size
-                        Each_Image_sizeX = round(sizeX2 / 2)
-                        Each_Image_sizeY = round(sizeY2 / 2)
-                        row_counter_for_open += 1
-                        widthCounter1 = 0
-                        widthCounter2 = Each_Image_sizeX
-                        for w in range(0, 2):
-                            Wim = Each_Image.crop(
-                                (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX) - 1))
-                            Wim.save(os.path.join(path3, "SMALL_CELL." + str(counter3) + ".png"))
-                            counter3 += 1
-                            widthCounter1 = widthCounter1 + Each_Image_sizeX
-                            widthCounter2 = widthCounter2 + Each_Image_sizeX
-                counter3 = 0
-                for i in range(0, 96):
-                    im = Image.open(os.path.join(path1, "Yeast_Cluster_Bin.%d.png" % i))
-                    sizeX, sizeY = im.size
-                    im_sizeX = round(sizeX / 2)
-                    im_sizeY = round(sizeY / 2)
-                    for h in range(0, im.height, im_sizeY):
-                        nim = im.crop((0, h, im.width - 1, min(im.height, h + im_sizeY) - 1))
-                        nim.save(os.path.join(path, "ROW_SMALL." + str(row_counter_for_save) + ".png"))
-                        row_counter_for_save += 1
-                        if (h >= im_sizeY):
-                            break
-                    for i in range(0, 2):
-                        rowImage = (os.path.join(path, "ROW_SMALL.%d.png" % row_counter_for_open))
-                        Each_Image = Image.open(rowImage)
-                        sizeX2, sizeY2 = Each_Image.size
-                        Each_Image_sizeX = round(sizeX2 / 2)
-                        Each_Image_sizeY = round(sizeY2 / 2)
-                        row_counter_for_open += 1
-                        widthCounter1 = 0
-                        widthCounter2 = Each_Image_sizeX
-                        for w in range(0, 2):
-                            Wim = Each_Image.crop(
-                                (widthCounter1, w, widthCounter2, min(Each_Image.height, w + Each_Image_sizeX) - 1))
-                            Wim.save(os.path.join(path4, "SMALL_CELL." + str(counter3) + ".png"))
-                            counter3 += 1
-                            widthCounter1 = widthCounter1 + Each_Image_sizeX
-                            widthCounter2 = widthCounter2 + Each_Image_sizeX
-            # print("end of cluster maker")
-            # cheating rn to do the 96 well
 
-            if (image_count == 6):
-                im = Image.open(os.path.join(path, "Cropped_Threshold.png"))  # was "Cropped_full_yeast.png"
-                sizeX, sizeY = im.size
-                im_sizeX = round(sizeX / 12)
-                im_sizeY = round(sizeY / 8)
-                for h in range(0, im.height, im_sizeY):
-                    nim = im.crop((0, h, im.width - 1, min(im.height, h + im_sizeY) - 1))
-                    nim.save(os.path.join(path, "Yeast_Row_Bin." + str(counter) + ".png"))
-                    counter += 1
-                anotherCounter = 0
-                for i in range(0, 8):
-                    columnImage = (os.path.join(path, "Yeast_Row_Bin.%d.png" % anotherCounter))
-                    Each_Image = Image.open(columnImage)
-                    sizeX2, sizeY2 = Each_Image.size
-                    Each_Image_sizeX = round(sizeX2 / 12)
-                    Each_Image_sizeY = round(sizeY2 / 8)
-                    anotherCounter += 1
-                    widthCounter1 = 0
-                    widthCounter2 = Each_Image_sizeX
-                    for w in range(0, 12):
-                        Wim = Each_Image.crop(
-                            (widthCounter1, w, widthCounter2, round(Each_Image.height, w + Each_Image_sizeX)))
-                        Wim.save(os.path.join(path1, "Yeast_Cluster_Bin." + str(counter1) + ".png"))
-                        counter1 += 1
-                        widthCounter1 = widthCounter1 + Each_Image_sizeX
-                        widthCounter2 = widthCounter2 + Each_Image_sizeX
-                        # print(counter1)
-                im = Image.open(os.path.join(path, "Cropped_full_yeast.png"))  # was "Cropped_full_yeast.png"
-                counter = 0
-                anotherCounter = 0
-                counter1 = 0
-                sizeX, sizeY = im.size
-                im_sizeX = round(sizeX / 12)
-                im_sizeY = round(sizeY / 8)
-                for h in range(0, im.height, im_sizeY):
-                    nim = im.crop((0, h, im.width - 1, min(im.height, h + im_sizeY) - 1))
-                    nim.save(os.path.join(path, "Yeast_Row." + str(counter) + ".png"))
-                    counter += 1
-                anotherCounter = 0
-                for i in range(0, 8):
-                    columnImage = (os.path.join(path, "Yeast_Row.%d.png" % anotherCounter))
-                    Each_Image = Image.open(columnImage)
-                    sizeX2, sizeY2 = Each_Image.size
-                    Each_Image_sizeX = round(sizeX2 / 12)
-                    Each_Image_sizeY = round(sizeY2 / 8)
-                    anotherCounter += 1
-                    widthCounter1 = 0
-                    widthCounter2 = Each_Image_sizeX
-                    for w in range(0, 12):
-                        Wim = Each_Image.crop(
-                            (widthCounter1, w, widthCounter2, round(Each_Image.height, w + Each_Image_sizeX)))
-                        Wim.save(os.path.join(path2, "Yeast_Cluster." + str(counter1) + ".png"))
-                        counter1 += 1
-                        widthCounter1 = widthCounter1 + Each_Image_sizeX
-                        widthCounter2 = widthCounter2 + Each_Image_sizeX
-                im = Image.open(os.path.join(path, "Cropped_full_yeast.png"))  # was "Cropped_full_yeast.png"
-                counter = 0
-                anotherCounter = 0
-                counter1 = 0
-                sizeX, sizeY = im.size
-                im_sizeX = round(sizeX / 12)
-                im_sizeY = round(sizeY / 8)
-                for h in range(0, im.height, im_sizeY):
-                    nim = im.crop((0, h, im.width - 1, min(im.height, h + im_sizeY) - 1))
-                    nim.save(os.path.join(path, "Yeast_Row." + str(counter) + ".png"))
-                    counter += 1
-                anotherCounter = 0
-                for i in range(0, 8):
-                    columnImage = (os.path.join(path, "Yeast_Row.%d.png" % anotherCounter))
-                    Each_Image = Image.open(columnImage)
-                    sizeX2, sizeY2 = Each_Image.size
-                    Each_Image_sizeX = round(sizeX2 / 12)
-                    Each_Image_sizeY = round(sizeY2 / 8)
-                    anotherCounter += 1
-                    widthCounter1 = 0
-                    widthCounter2 = Each_Image_sizeX
-                    for w in range(0, 12):
-                        Wim = Each_Image.crop(
-                            (widthCounter1, w, widthCounter2, round(Each_Image.height, w + Each_Image_sizeX)))
-                        Wim.save(os.path.join(path2, "Yeast_Cluster." + str(counter1) + ".png"))
-                        counter1 += 1
-                        widthCounter1 = widthCounter1 + Each_Image_sizeX
-                        widthCounter2 = widthCounter2 + Each_Image_sizeX
+            im = cv2.imread(os.path.join(path, "Cropped_full_yeast.png"))
+            M = int(im.shape[0] / 8)
+            N = int(im.shape[1] / 12)
+            # print(M, N)
+
+            tiles = [im[x:(x + M), y:(y + N)] for x in range(0, im.shape[0], M) for y in range(0, im.shape[1], N)]
+            indexes = []
+            for i in range(len(tiles)):
+                if (tiles[i].shape[1] < 10 or tiles[i].shape[0] < 10):
+                    indexes.append(i)
+
+            print(indexes)
+            for index in sorted(indexes, reverse=True):
+                del tiles[index]
+
+            # new_tiles = np.delete(tiles, index, axis=0)
+
+            for i in range(len(tiles)):
+                cv2.imwrite(os.path.join(path2, "Yeast_Cluster.%d.png") % i, tiles[i])
+
+            im = cv2.imread(os.path.join(path, "Cropped_Threshold.png"))
+            M = int(im.shape[0] / 8)
+            N = int(im.shape[1] / 12)
+            # print(M, N)
+
+            tiles = [im[x:(x + M), y:(y + N)] for x in range(0, im.shape[0], M) for y in range(0, im.shape[1], N)]
+            indexes = []
+            for i in range(len(tiles)):
+                if (tiles[i].shape[1] < 10 or tiles[i].shape[0] < 10):
+                    indexes.append(i)
+
+            print(indexes)
+            for index in sorted(indexes, reverse=True):
+                del tiles[index]
+
+            # new_tiles = np.delete(tiles, index, axis=0)
+
+            for i in range(len(tiles)):
+                cv2.imwrite(os.path.join(path1, "Yeast_Cluster_Bin.%d.png") % i, tiles[i])
 
 
         # runs CC and returns size and some stats
