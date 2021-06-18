@@ -69,6 +69,7 @@ if excel_or_nah == 1:
                    "\nThe folder should only have images inside and nothing else"
                    "\nOutput will be placed in the folder you selected as well")
     folder = easygui.diropenbox()
+    #test1 = easygui.diropenbox()
     # Loops over every image in the selected folder
     imagePath = (list(paths.list_images(folder)))
     imagePath = os_sorted(imagePath)
@@ -96,11 +97,10 @@ if excel_or_nah == 1:
             except OSError:
                 pass
             image = cv2.imread(imagePath)
-
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             cv2.imwrite(os.path.join(path, "gray.png"), gray)
 
-            ret, thres = cv2.threshold(gray,137,255,cv2.THRESH_BINARY) #127 137
+            ret, thres = cv2.threshold(gray,127,255,cv2.THRESH_BINARY) #127 137
 
             cv2.imwrite(os.path.join(path, 'Wholepic.png'), thres)
 
@@ -117,8 +117,6 @@ if excel_or_nah == 1:
                 test.append(peri)
 
             index_max = np.argmax(test)
-            #print(index_max)
-            #print(test[index_max])
             x,y,w,h = cv2.boundingRect(contours[index_max])
             c = max(contours, key = cv2.contourArea)
             x,y,w,h = cv2.boundingRect(c)
@@ -132,11 +130,16 @@ if excel_or_nah == 1:
             cv2.imwrite(os.path.join(path, "cropped.png"), image)
             L, a, b = cv2.split(image)  # can do l a or b
             thres = cv2.adaptiveThreshold(b, 255,
-                                          cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 255,-1)  # For liz's pictures 241
+                                        cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 255,-1)  # For liz's pictures 241
+            cv2.imwrite(os.path.join(path, "cropped_thres.png"), thres)
+
             fill = pcv.fill(thres, 1000)
-            #blur = cv2.blur(fill, (15, 15), 0)
+            cv2.imwrite(os.path.join(path, "cropped_thres_filled.png"), fill)
+
+            blur = cv2.blur(fill, (15, 15), 0)
 
             fill_hole = cv2.morphologyEx(fill, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_RECT, (21, 21)), iterations=2)
+            cv2.imwrite(os.path.join(path, "cropped_thres_filled.png"), fill_hole)
 
             nb_components, output, stats, centroids = cv2.connectedComponentsWithStats(fill_hole, connectivity=8)
             new_centroids = []
@@ -149,115 +152,94 @@ if excel_or_nah == 1:
                     img2[output == i + 1] = 255
                     new_centroids.append(centroids[i])
             cv2.imwrite(os.path.join(path, "filter.png"), img2)
+            #print(len(centroids))
+            #print(len(new_centroids))
+            #print(new_centroids[0])
+            #print(new_centroids[0][1])
 
             y = []
             x = []
             for i in range(len(new_centroids)):
                 y.append(new_centroids[i][1])
                 x.append(new_centroids[i][0])
+            #print(len(x))
 
             XARRAY = sorted(x)
             YARRAY = sorted(y)
-            smallX = int(XARRAY[6]) - 60
-            bigX = int(XARRAY[len(XARRAY) - 6]) + 60
-            smallY = int(YARRAY[6]) - 60
-            bigY = int(YARRAY[len(YARRAY) - 6]) + 60
+            smallX = int(XARRAY[4]) - 80
+            bigX = int(XARRAY[len(XARRAY)-4]) + 80
+            smallY = int(YARRAY[4]) - 80
+            bigY = int(YARRAY[len(YARRAY)-4]) + 80
 
             #print(smallX, smallY, bigX, bigY)
 
-            image = cv2.imread(os.path.join(path,"cropped.png"))
+            image = cv2.imread(os.path.join(path, "cropped.png"))
             image = image[smallY:bigY, smallX:bigX]
-            cv2.imwrite(os.path.join(path, "Cropped_full_yeast.png"), image)
-            circle_me = cv2.imread(os.path.join(path, "Cropped_full_yeast.png"))
-            cropped_img = cv2.imread(
-                os.path.join(path, "Cropped_full_yeast.png"))
-            L, a, b = cv2.split(cropped_img)  # can do l a or b
-            Gaussian_blue = cv2.adaptiveThreshold(b, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 241,
-                                                  -1)  # For liz's pictures 241
-            cv2.imwrite(os.path.join(path, "blue_test.png"), Gaussian_blue)
-            blur_image = pcv.median_blur(Gaussian_blue, 10)
-            heavy_fill_blue = pcv.fill(blur_image, 1000)  # value 400
+            cv2.imwrite(os.path.join(path,"final.png"), image)
+            L, a, b = cv2.split(image)  # can do l a or b
+            blur_image = pcv.median_blur(a, 10)
+            Gaussian_blue = cv2.adaptiveThreshold(a, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 281,
+                                                -1)  # For liz's pictures 241
+            heavy_fill_blue = pcv.fill(Gaussian_blue, 1000)  # value 400
             hole_fill = pcv.fill_holes(heavy_fill_blue)
             cv2.imwrite(os.path.join(path, "Cropped_Threshold.png"), hole_fill)
+            #cv2.imwrite(os.path.join(test1, "Cropped_thres%d.png" % image_counter),hole_fill)
+
 
 
         # crops the plate into the clusters
         def cluster_maker(image_count):
-            dire = folder  # used to be os.getcwd()
+            dire = folder
             path = dire + '/Classifyer_dump'
-            path1 = dire + '/Yeast_cluster_inv'
-            path2 = dire + '/Yeast_cluster'
-            path3 = dire + '/Cells'
-            path4 = dire + '/Binary_cell'
-            try:
-                os.makedirs(path)
-            except OSError:
-                pass
-            try:
-                os.makedirs(path1)
-            except OSError:
-                pass
-            try:
-                os.makedirs(path2)
-            except OSError:
-                pass
-            try:
-                os.makedirs(path3)
-            except OSError:
-                pass
+            path4 = dire + '/Yeast_cluster'
+            path5 = dire + '/Yeast_cluster_inv'
             try:
                 os.makedirs(path4)
+                os.makedirs(path5)
             except OSError:
                 pass
+            im = cv2.imread(os.path.join(path,"final.png"))
+            M = int(im.shape[0]/8)
+            N = int(im.shape[1]/12)
+            #print(M, N)
 
-            im = cv2.imread(os.path.join(path, "Cropped_full_yeast.png"))
-            M = int(im.shape[0] / 8)
-            N = int(im.shape[1] / 12)
-            # print(M, N)
+            tiles = [im[x:(x+M), y:(y+N)] for x in range(0, im.shape[0], M) for y in range(0, im.shape[1], N)]
 
-            tiles = [im[x:(x + M), y:(y + N)] for x in range(0, im.shape[0], M) for y in range(0, im.shape[1], N)]
             indexes = []
             for i in range(len(tiles)):
-                if (tiles[i].shape[1] < 10 or tiles[i].shape[0] < 10):
+                if (tiles[i].shape[1] < 20 or tiles[i].shape[0] < 20):
                     indexes.append(i)
 
-            print(indexes)
+            #print(indexes)
             for index in sorted(indexes, reverse=True):
                 del tiles[index]
 
-            # new_tiles = np.delete(tiles, index, axis=0)
+            #new_tiles = np.delete(tiles, index, axis=0)
 
             for i in range(len(tiles)):
-                cv2.imwrite(os.path.join(path2, "Yeast_Cluster.%d.png") % i, tiles[i])
+                cv2.imwrite(os.path.join(path4, "Cells%d.png") %i, tiles[i])
 
             im = cv2.imread(os.path.join(path, "Cropped_Threshold.png"))
-            M = int(im.shape[0] / 8)
-            N = int(im.shape[1] / 12)
-            # print(M, N)
-
             tiles = [im[x:(x + M), y:(y + N)] for x in range(0, im.shape[0], M) for y in range(0, im.shape[1], N)]
             indexes = []
             for i in range(len(tiles)):
-                if (tiles[i].shape[1] < 10 or tiles[i].shape[0] < 10):
+                if (tiles[i].shape[1] < 20 or tiles[i].shape[0] < 20):
                     indexes.append(i)
 
-            print(indexes)
             for index in sorted(indexes, reverse=True):
                 del tiles[index]
 
-            # new_tiles = np.delete(tiles, index, axis=0)
-
             for i in range(len(tiles)):
-                cv2.imwrite(os.path.join(path1, "Yeast_Cluster_Bin.%d.png") % i, tiles[i])
+                cv2.imwrite(os.path.join(path5, "Cells%d.png") % i, tiles[i])
 
 
         # runs CC and returns size and some stats
         def connected_comps_for_Chris(counter):
             dire = folder  # used to be os.getcwd()
             path = dire + '/Yeast_cluster_inv'
-            cropped_img = cv2.imread(os.path.join(path, 'Yeast_Cluster_Bin.%d.png' % counter),
-                                     cv2.IMREAD_UNCHANGED)  # changed from Yeast_Cluster.%d.png  %counter
-            circle_me = cv2.imread(os.path.join(path, "Yeast_Cluster_Bin.%d.png" % counter))
+            cropped_img = cv2.imread(os.path.join(path, 'Cells%d.png' % counter),
+                                     cv2.IMREAD_GRAYSCALE)  # changed from Yeast_Cluster.%d.png  %counter
+            circle_me = cv2.imread(os.path.join(path, "Cells%d.png" % counter))
 
             connected_counter = 0
 
@@ -471,10 +453,10 @@ if excel_or_nah == 1:
             # print(returned_size)
             cc = []
             cc = returned_size[0]
-            print('Image %d' % image_counter)
-            print('cluster %d' % c)
-            print(cc)
-            print(returned_size[8])
+            #print('Image %d' % image_counter)
+            #print('cluster %d' % c)
+            #print(cc)
+            #print(returned_size[8])
             Q1_size.append(cc[0])
             Q2_size.append(cc[1])
             Q3_size.append(cc[2])
