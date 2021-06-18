@@ -642,7 +642,7 @@ if excel_or_nah == 1:
         if image_counter != 6:
             flag = 0
             plate_number = ((4 * image_counter) - 3)
-            plate_number = (str(1).zfill(2))
+            plate_number = (str(plate_number).zfill(2))
             for c in range(0, 384):
                 # print(c)
                 base_arr.append(base)
