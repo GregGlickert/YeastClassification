@@ -267,7 +267,7 @@ if excel_or_nah == 1:
             hit_counter = 1
             for i in range(0, (len(stats)), 1):
                 if (centroids[i][0] >= 30 and centroids[i][0] <= 120 and centroids[i][1] >= 40 and centroids[i][
-                    1] <= 100):
+                    1] <= 160):
                     # print("%d is in 1" % i)
                     cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
                     centroid = int(centroids[i][0]), int(centroids[i][1])
@@ -280,7 +280,7 @@ if excel_or_nah == 1:
                     cc_size_array.append(0)
             for i in range(0, (len(stats)), 1):
                 if (centroids[i][0] >= 200 and centroids[i][0] <= 280 and centroids[i][1] >= 40 and centroids[i][
-                    1] <= 100):
+                    1] <= 160):
                     cc_size_array.append(stats[i, cv2.CC_STAT_AREA])
                     centroid = int(centroids[i][0]), int(centroids[i][1])
                     cv2.putText(circle_me, "%d" % hit_counter, centroid, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
@@ -318,6 +318,8 @@ if excel_or_nah == 1:
                 if (cell_counter4 == len(stats)):
                     cc_size_array.append(0)
             cv2.imwrite("centroid test.png", circle_me)
+            #cv2.imshow("test", circle_me)
+            #cv2.waitKey(0)
 
             while (len(cc_size_array) >= 5):
                 print(cc_size_array)
