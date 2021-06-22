@@ -162,92 +162,90 @@ if excel_or_nah == 1:
 
         # crops the plate into the clusters
         def cluster_maker(image_counter):
+            dire = folder
+            path = dire + '/Classifyer_dump'
+            path2 = dire + '/Cells'
+            path3 = dire + '/Binary_cell'
+            path4 = dire + '/Yeast_cluster'
+            path5 = dire + '/Yeast_cluster_inv'
+            try:
+                os.makedirs(path2)
+                os.makedirs(path3)
+                os.makedirs(path4)
+                os.makedirs(path5)
+            except OSError:
+                pass
+            im = cv2.imread(os.path.join(path,"final.png"))
+            M = int(im.shape[0]/8)
+            N = int(im.shape[1]/12)
+            #print(M, N)
+
+            tiles = [im[x:(x+M), y:(y+N)] for x in range(0, im.shape[0], M) for y in range(0, im.shape[1], N)]
+
+            indexes = []
+            for i in range(len(tiles)):
+                if (tiles[i].shape[1] < 20 or tiles[i].shape[0] < 20):
+                    indexes.append(i)
+
+            #print(indexes)
+            for index in sorted(indexes, reverse=True):
+                del tiles[index]
+
+            #new_tiles = np.delete(tiles, index, axis=0)
+
+            for i in range(len(tiles)):
+                cv2.imwrite(os.path.join(path4, "Cells%d.png") %i, tiles[i])
+
+            im = cv2.imread(os.path.join(path, "Cropped_Threshold.png"))
+            tiles = [im[x:(x + M), y:(y + N)] for x in range(0, im.shape[0], M) for y in range(0, im.shape[1], N)]
+            indexes = []
+            for i in range(len(tiles)):
+                if (tiles[i].shape[1] < 20 or tiles[i].shape[0] < 20):
+                    indexes.append(i)
+
+            for index in sorted(indexes, reverse=True):
+                del tiles[index]
+
+            for i in range(len(tiles)):
+                cv2.imwrite(os.path.join(path5, "Cells%d.png") % i, tiles[i])
+
             if (image_counter != 5):
-                dire = folder
-                path = dire + '/Classifyer_dump'
-                path2 = dire + '/Cells'
-                path3 = dire + '/Binary_cell'
-                try:
-                    os.makedirs(path2)
-                    os.makedirs(path3)
-                except OSError:
-                    pass
-                im = cv2.imread(os.path.join(path,"final.png"))
-                M = int(im.shape[0]/16)
-                N = int(im.shape[1]/24)
-                #print(M, N)
+                n = 0
+                q = 0
+                for c in range(96):
+                    image = cv2.imread(os.path.join(path4, "Cells%d.png" % c))
+                    M = int(image.shape[0] / 2)
+                    N = int(image.shape[1] / 2)
+                    tiles = [image[x:(x + M), y:(y + N)] for x in range(0, im.shape[0], M) for y in range(0, im.shape[1], N)]
+                    indexes = []
+                    for i in range(len(tiles)):
+                        if (tiles[i].shape[1] < 20 or tiles[i].shape[0] < 20):
+                            indexes.append(i)
 
-                tiles = [im[x:(x+M), y:(y+N)] for x in range(0, im.shape[0], M) for y in range(0, im.shape[1], N)]
+                    # print(indexes)
+                    for index in sorted(indexes, reverse=True):
+                        del tiles[index]
 
-                indexes = []
-                for i in range(len(tiles)):
-                    if (tiles[i].shape[1] < 20 or tiles[i].shape[0] < 20):
-                        indexes.append(i)
+                    # new_tiles = np.delete(tiles, index, axis=0)
 
-                #print(indexes)
-                for index in sorted(indexes, reverse=True):
-                    del tiles[index]
+                    for i in range(len(tiles)):
+                        cv2.imwrite(os.path.join(path2, "Cells%d.png") % n, tiles[i])
+                        n = n + 1
 
-                #new_tiles = np.delete(tiles, index, axis=0)
+                    im = cv2.imread(os.path.join(path5, "Cells%d.png" % c))
+                    tiles = [im[x:(x + M), y:(y + N)] for x in range(0, im.shape[0], M) for y in range(0, im.shape[1], N)]
+                    indexes = []
+                    for i in range(len(tiles)):
+                        if (tiles[i].shape[1] < 20 or tiles[i].shape[0] < 20):
+                            indexes.append(i)
 
-                for i in range(len(tiles)):
-                    cv2.imwrite(os.path.join(path2, "Cells%d.png") %i, tiles[i])
+                    for index in sorted(indexes, reverse=True):
+                        del tiles[index]
 
-                im = cv2.imread(os.path.join(path, "Cropped_Threshold.png"))
-                tiles = [im[x:(x + M), y:(y + N)] for x in range(0, im.shape[0], M) for y in range(0, im.shape[1], N)]
-                indexes = []
-                for i in range(len(tiles)):
-                    if (tiles[i].shape[1] < 20 or tiles[i].shape[0] < 20):
-                        indexes.append(i)
+                    for i in range(len(tiles)):
+                        cv2.imwrite(os.path.join(path3, "Cells%d.png") % q, tiles[i])
+                        q = q + 1
 
-                for index in sorted(indexes, reverse=True):
-                    del tiles[index]
-
-                for i in range(len(tiles)):
-                    cv2.imwrite(os.path.join(path3, "Cells%d.png") % i, tiles[i])
-            if (image_counter == 5):
-                dire = folder
-                path = dire + '/Classifyer_dump'
-                path4 = dire + '/Yeast_cluster'
-                path5 = dire + '/Yeast_cluster_inv'
-                try:
-                    os.makedirs(path4)
-                    os.makedirs(path5)
-                except OSError:
-                    pass
-                im = cv2.imread(os.path.join(path,"final.png"))
-                M = int(im.shape[0]/8)
-                N = int(im.shape[1]/12)
-                #print(M, N)
-
-                tiles = [im[x:(x+M), y:(y+N)] for x in range(0, im.shape[0], M) for y in range(0, im.shape[1], N)]
-
-                indexes = []
-                for i in range(len(tiles)):
-                    if (tiles[i].shape[1] < 20 or tiles[i].shape[0] < 20):
-                        indexes.append(i)
-
-                #print(indexes)
-                for index in sorted(indexes, reverse=True):
-                    del tiles[index]
-
-                #new_tiles = np.delete(tiles, index, axis=0)
-
-                for i in range(len(tiles)):
-                    cv2.imwrite(os.path.join(path4, "Cells%d.png") %i, tiles[i])
-
-                im = cv2.imread(os.path.join(path, "Cropped_Threshold.png"))
-                tiles = [im[x:(x + M), y:(y + N)] for x in range(0, im.shape[0], M) for y in range(0, im.shape[1], N)]
-                indexes = []
-                for i in range(len(tiles)):
-                    if (tiles[i].shape[1] < 20 or tiles[i].shape[0] < 20):
-                        indexes.append(i)
-
-                for index in sorted(indexes, reverse=True):
-                    del tiles[index]
-
-                for i in range(len(tiles)):
-                    cv2.imwrite(os.path.join(path5, "Cells%d.png") % i, tiles[i])
 
 
         # runs CC and is looking for small cells returns stats
@@ -624,7 +622,6 @@ if excel_or_nah == 1:
         color_counter = 0
         plate_size = []
         plate_color = []
-
         initcrop(imagePath[i])
         cluster_maker(image_counter)
         # 0 means size and color looking for small and red
