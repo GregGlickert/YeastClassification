@@ -658,6 +658,8 @@ if excel_or_nah == 1:
                     toomanycounter = toomanycounter + 1
                 anothercounter = (str(anothercounter).zfill(2))
                 platename_arr.append(plate_name)
+                if (plate_name == 'U21-D03'):
+                    TF = 1
                 if (TF == 0):
                     test = df.loc[plate_name]
                     in_order = in_order.append(test)
