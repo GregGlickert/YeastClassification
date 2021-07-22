@@ -43,6 +43,7 @@ if excel_or_nah == 1:
                    "\nThe folder should only have images inside and nothing else"
                    "\nOutput will be placed in the folder you selected as well")
     folder = easygui.diropenbox()
+    dire_name = os.path.basename(folder)
     # Loops over every image in the selected folder
     imagePath = (list(paths.list_images(folder)))
     imagePath = os_sorted(imagePath)
@@ -598,7 +599,7 @@ if excel_or_nah == 1:
 
 
         # sends data to excel
-        def excel_writer_liz(base_arr, platename_arr, size, color, dire, red, TF):
+        def excel_writer_liz(base_arr, platename_arr, size, color, dire, red, TF, dire_name):
             if (TF == 1):
                 # print(len(red))
                 # print(len(color))
@@ -606,7 +607,7 @@ if excel_or_nah == 1:
                     {'Image processed': (base_arr), 'Cluster': (platename_arr),
                      'Size': (size), 'color': (color), 'red': (red)})
                 os.chdir(dire)
-                Excel_name = "results.xlsx"
+                Excel_name = ("results for %s.xlsx" % dire_name)
                 new_df.to_excel(Excel_name)
                 return 0
             if (TF == 0):
@@ -697,8 +698,8 @@ if excel_or_nah == 1:
                     toomanycounter = toomanycounter + 1
                 anothercounter = (str(anothercounter).zfill(2))
                 # print(plate_name)
-                #if (plate_name == 'U21-H'):
-                #    TF = 1
+                if (plate_name == 'U21-D03'):
+                    TF = 1
                 if (TF == 0):
                     test = df.loc[plate_name]
                     in_order = in_order.append(test)
@@ -790,11 +791,11 @@ if excel_or_nah == 1:
     # pos_size = pos_hit(size_pos, color_pos)
     if (TF_was == 1):
         new_df = excel_writer_liz(base_arr, platename_arr, total_size_array,
-                                  total_color_array, folder, red_array, TF_was)
+                                  total_color_array, folder, red_array, TF_was, dire_name)
     if (TF_was == 0):
         os.chdir(folder)
         new_df = excel_writer_liz(base_arr, platename_arr, total_size_array,
-                                  total_color_array, folder, red_array, TF_was)
+                                  total_color_array, folder, red_array, TF_was, dire_name)
 
         Excel_name = "class.xlsx"
         name = "lib.xlsx"
@@ -804,7 +805,8 @@ if excel_or_nah == 1:
         df2 = pd.read_excel("lib.xlsx", index_col=0).reset_index()
 
         new_df = pd.concat([df1, df2], axis=1, join="inner")
-        new_df.to_excel("results.xlsx")
+
+        new_df.to_excel(("results for %s.xlsx" % dire_name))
 
 
     beep = lambda x: os.system("echo -DONE! '\a';sleep 0.2;" * x)
