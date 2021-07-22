@@ -54,9 +54,13 @@ TF_was = 1
 excel_or_nah = easygui.indexbox(msg="select what you would like to do"
                                     "\nIf this is the first time using the script run setup first",
                                 title="Yeast Classifier",
-                                choices=('SetUp','Extract data from pictures','Compare Excel sheets'))
+                                choices=('SetUp', 'Extract data from pictures', 'Compare Excel sheets'))
 pickled_path = os.getcwd()
 if excel_or_nah == 1:
+    pickled = os.path.exists(os.path.join(pickled_path,'pickled_setup'))
+    if pickled == False:
+        print("Error no setup file found")
+        exit(-1)
     easygui.msgbox("\nCurrently the Size function is set for 384 well plates with each cluster being"
                    "\nU1-A1 U1-A1 "
                    "\nU1-A1 U1-A1")
